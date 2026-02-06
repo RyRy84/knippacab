@@ -137,6 +137,58 @@ npx expo install <pkg>  # Install Expo-compatible package versions
 
 ## Git
 
-- Remote: github.com/RyRy84/knippacab (to be created)
+- Remote: github.com/RyRy84/knippacab
 - Branch strategy: main for stable, feature branches for new work
 - Commit style: conventional commits (feat:, fix:, docs:, refactor:)
+
+## Implemented Modules
+
+### `src/utils/unitConversion.ts` — Unit Conversion & Display Formatting
+
+**Purpose:** All internal math uses mm. This module handles every conversion between mm and Imperial (inches, feet+inches, fractional inches to 1/16" precision) and formats values for display.
+
+**Constants:**
+- `MM_PER_INCH` = 25.4
+- `INCHES_PER_FOOT` = 12
+- `DEFAULT_SAW_KERF_MM` = 3.175 (1/8" blade kerf — user-configurable in project settings)
+- `FRACTION_PRECISION` = 16 (display rounds to nearest 1/16")
+
+**Types:**
+- `FractionalInches` — `{ inches, numerator, denominator }` (e.g., 24 3/16")
+- `FeetInches` — `{ feet, inches, numerator, denominator }` (e.g., 3'-6 1/2")
+- `UnitSystem` — `"metric" | "imperial"` (used by UI to pick display format)
+
+**Core Functions:**
+
+| Function | Direction | Example |
+|----------|-----------|---------|
+| `mmToInches(mm)` | mm → decimal inches | `25.4 → 1` |
+| `inchesToMm(inches)` | decimal inches → mm | `24 → 609.6` |
+| `mmToFeet(mm)` | mm → decimal feet | `914.4 → 3` |
+| `feetToMm(feet)` | decimal feet → mm | `4 → 1219.2` |
+| `mmToFractionalInches(mm)` | mm → FractionalInches | `614.3625 → {inches:24, num:3, den:16}` |
+| `mmToFeetInches(mm)` | mm → FeetInches | `1000 → {feet:3, inches:3, num:3, den:8}` |
+| `fractionalInchesToMm(inches, num, den)` | fractional inches → mm | `24, 3, 16 → 614.3625` |
+| `feetInchesToMm(feet, inches, num, den)` | feet+inches → mm | `2, 6, 3, 8 → 771.525` |
+
+**Display Formatters:**
+
+| Function | Output Example |
+|----------|---------------|
+| `formatFractionalInches(value)` | `'24 3/16"'` |
+| `formatFeetInches(value)` | `"3'-3 3/8\""` |
+| `formatMm(mm)` | `"614.4 mm"` |
+| `formatForDisplay(mm, unitSystem, useFeet?)` | Auto-formats based on user preference |
+
+**Helper:** `reduceFraction(num, den)` — simplifies fractions for clean display (8/16 → 1/2).
+
+**Usage pattern from UI components:**
+```typescript
+import { formatForDisplay } from "../utils/unitConversion";
+// Display a stored mm value in the user's preferred units:
+const label = formatForDisplay(876, "imperial");  // → '34 1/2"'
+```
+
+**Edge cases handled:** zero values, negative values, fraction rounding carry-over (15.9/16 → next whole inch → next foot), division-by-zero guard on denominator.
+
+**Code style:** Heavily commented with C# comparison notes throughout. All functions have JSDoc with examples. Written for readability over cleverness — developer is learning TypeScript from a C#/.NET background.
