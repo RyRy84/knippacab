@@ -6,6 +6,8 @@
 
 Like a video game tutorial: early levels give you one button to press, later levels unlock full control schemes. We want DIYers to succeed on their first cabinet, then discover they can customize everything as they learn.
 
+**Project Scope Evolution:** From single cabinet calculator → full kitchen design system → AR-powered visualization tool.
+
 ---
 
 ## UX Strategy: Three Tiers of Complexity
@@ -14,7 +16,7 @@ Like a video game tutorial: early levels give you one button to press, later lev
 **Goal:** Build a standard base cabinet in under 2 minutes.
 
 **User sees:**
-- Cabinet type picker with photos (Base / Wall / Tall)
+- Cabinet type picker with photos (Base / Wall / Tall / Corner)
 - Width selector with standard sizes only (dropdown: 12", 18", 24", 30", 36")
 - One button: "Calculate My Cabinet"
 
@@ -39,13 +41,14 @@ Like a video game tutorial: early levels give you one button to press, later lev
 - Toe kick options: Standard / Custom height / None
 - Material thickness picker (presets: 1/2", 5/8", 3/4")
 - Optional: Number of drawers
+- **NEW:** 2D layout view to arrange multiple cabinets side-by-side
 
 **What still uses defaults:**
 - Reveals (most users don't know what this means yet)
 - Joinery method (pocket holes still default)
 - Grain direction (auto-assigned)
 
-**Output:** Same as Tier 1, but with their custom measurements.
+**Output:** Same as Tier 1, but with their custom measurements + visual layout of cabinet arrangement.
 
 ---
 
@@ -60,8 +63,11 @@ Like a video game tutorial: early levels give you one button to press, later lev
 - Dado depth settings (affects cut list dimensions)
 - Saw kerf adjustment
 - Manual grain direction override on any part
+- **NEW:** Corner cabinet angle/depth customization
+- **NEW:** 3D cabinet preview (V2)
+- **NEW:** AR room visualization (V2)
 
-**Output:** Full professional-grade cut list with assembly instructions adapted to their joinery choices.
+**Output:** Full professional-grade cut list with assembly instructions adapted to their joinery choices + 3D/AR visualization.
 
 ---
 
@@ -138,28 +144,73 @@ Like a video game tutorial: early levels give you one button to press, later lev
 
 ---
 
-### **Phase 4: Multi-Cabinet Projects (Week 5)**
+### **Phase 4: Multi-Cabinet Projects & 2D Layout (Week 5-6)**
 *Goal: Design an entire kitchen, not just one cabinet*
 
-**Deliverable:** Projects contain multiple cabinets, unified cut list.
+**Deliverable:** Projects contain multiple cabinets with visual layout planning.
 
 **Features:**
-1. "Add Cabinet" button from Review screen
-2. Cabinet list management (edit/delete/duplicate)
-3. Combined cut list across all cabinets
-4. Sheet optimizer accounts for all parts from all cabinets
-5. Project save/load (SQLite)
+1. **"Add Cabinet" workflow** from Review screen
+2. **Cabinet list management** (edit/delete/duplicate/reorder)
+3. **2D Floor Plan View** (NEW):
+   - Drag-and-drop cabinet placement
+   - Side-by-side arrangement with measurements
+   - Wall length calculator
+   - Gap/filler detection between cabinets
+   - Top-down view showing depth and width
+   - Export layout as image/PDF
+4. **Combined cut list** across all cabinets
+5. **Sheet optimizer accounts for all parts** from all cabinets
+6. **Project save/load** (SQLite)
 
 **What becomes powerful:**
 - Design full kitchen runs
+- Visualize how cabinets fit together
 - Minimize waste across multiple cabinets
 - Edit individual cabinets independently
+- Detect spacing issues early
 
-**Validation:** User designs a 3-cabinet kitchen (24" sink base + two 18" bases) and gets one optimized cutting plan.
+**Validation:** User designs a 3-cabinet kitchen (24" sink base + two 18" bases), arranges them in 2D layout view to see total run length (66"), and gets one optimized cutting plan.
 
 ---
 
-### **Phase 5: Joinery & Pro Features (Week 6-7)**
+### **Phase 4.5: Corner Cabinet Solutions (Week 6-7)**
+*Goal: Handle the most complex cabinet type — corners*
+
+**Deliverable:** Support for corner base and wall cabinets.
+
+**Corner Cabinet Types Supported:**
+1. **Diagonal Corner (Lazy Susan base)**
+   - 36" or 42" face width
+   - Angled front, two perpendicular sides
+   - Optional lazy Susan hardware specs
+2. **Blind Corner (L-shaped)**
+   - One cabinet "reaches into" the corner
+   - Requires return depth calculation
+   - Pull-out shelf hardware recommendations
+3. **90° Corner Wall Cabinet**
+   - Open shelving or bi-fold door options
+   - Requires corner posts/fillers
+
+**Features:**
+1. Corner cabinet type picker (diagonal / blind / 90° wall)
+2. Corner-specific dimension calculator
+   - Diagonal cabinets: angled face width, side depth
+   - Blind corners: return depth, access opening width
+3. Hardware recommendations (lazy Susan, pull-out shelves)
+4. Integration with 2D layout (corner cabinets snap to wall intersections)
+5. Cut list adjustments for angled cuts (diagonal faces)
+
+**Complexity Considerations:**
+- **Tier 1:** Only diagonal corners with standard 36" size
+- **Tier 2:** Custom diagonal width, blind corner option
+- **Tier 3:** Full angle/depth control, custom access openings
+
+**Validation:** User adds a 36" diagonal corner base to a kitchen layout, positions it at wall intersection in 2D view, receives cut list including angled face pieces and lazy Susan specs.
+
+---
+
+### **Phase 5: Joinery & Pro Features (Week 8-9)**
 *Goal: Unlock Tier 3 for woodworkers who know what they're doing*
 
 **Deliverable:** Full joinery control + reveal customization.
@@ -186,7 +237,7 @@ Like a video game tutorial: early levels give you one button to press, later lev
 
 ---
 
-### **Phase 6: Doors & Drawer Faces (Week 8)**
+### **Phase 6: Doors & Drawer Faces (Week 10)**
 *Goal: Complete the cabinet — not just the box*
 
 **Deliverable:** Door/drawer face calculator with reveal math.
@@ -206,25 +257,121 @@ Like a video game tutorial: early levels give you one button to press, later lev
 
 ---
 
-### **Phase 7: Polish & Export (Week 9-10)**
+### **Phase 7: Polish & Export (Week 11-12)**
 *Goal: Production-ready output*
 
 **Deliverable:** PDF export, cost estimation, material shopping list.
 
 **Features:**
-1. PDF export (cut list + diagrams)
+1. PDF export (cut list + diagrams + 2D layout)
 2. Material cost estimation
 3. Hardware shopping list with quantities
 4. Cut list export to CSV
-5. 2D cabinet wireframe preview
+5. 2D cabinet wireframe preview per cabinet
 6. Print-friendly layouts
+7. Email/share project files
 
 **What becomes professional:**
 - Share plans with others
 - Take to the lumberyard with confidence
 - Estimate total project cost
 
-**Validation:** User exports a complete kitchen plan as PDF, estimates $800 in materials, and builds it successfully.
+**Validation:** User exports a complete kitchen plan as PDF with 2D layout, cutting diagrams, and shopping list, estimates $800 in materials, and builds it successfully.
+
+---
+
+## V2 Features: 3D Visualization & Augmented Reality
+
+### **Phase 8: 3D Cabinet Visualization (V2 - Week 13-15)**
+*Goal: See what you're building before you build it*
+
+**Deliverable:** Interactive 3D models of individual cabinets and full kitchen layouts.
+
+**Technology Stack:**
+- **React Native:** Three.js via expo-gl + expo-three
+- **Alternative:** Babylon.js for React Native
+- **Rendering:** WebGL-based 3D on mobile devices
+
+**Features:**
+1. **3D Cabinet Preview:**
+   - Rendered box with doors, drawers, hardware
+   - Rotate/zoom/pan with touch gestures
+   - Material textures (wood grain simulation)
+   - Toggle between wireframe and solid views
+2. **Full Kitchen 3D View:**
+   - All cabinets arranged based on 2D layout
+   - Walk-through camera mode
+   - Wall/floor/ceiling context for scale
+   - Countertop visualization
+3. **3D Export:**
+   - Export 3D models as OBJ/STL for further editing
+   - Screenshot renders for presentations
+
+**Integration Points:**
+- "View in 3D" button on any cabinet in Review screen
+- "3D Kitchen Preview" button in 2D layout view
+- 3D toggle in navigation (2D Layout ⇄ 3D View)
+
+**Performance Considerations:**
+- Simplified geometry for mobile (low-poly models)
+- Level of detail (LOD) based on camera distance
+- Lazy loading 3D assets
+- Web version gets full-quality renders
+
+**Validation:** User designs a 5-cabinet kitchen, switches to 3D view, rotates camera to see how cabinets look from multiple angles, verifies door swing clearances.
+
+---
+
+### **Phase 9: Augmented Reality Preview (V2 - Week 16-18)**
+*Goal: Killer mobile feature — see cabinets in your actual kitchen*
+
+**Deliverable:** AR camera mode that overlays cabinet designs in real space.
+
+**Technology Stack:**
+- **iOS:** ARKit via expo-ar (or react-native-arkit)
+- **Android:** ARCore via expo-ar
+- **Plane detection:** Floor/wall surface recognition
+- **Lighting estimation:** Match virtual cabinets to room lighting
+
+**Features:**
+1. **AR Placement Mode:**
+   - Open phone camera with AR overlay
+   - Point at wall/floor to detect surfaces
+   - Tap to place cabinet at 1:1 scale
+   - Cabinets appear life-size in room
+2. **AR Interactions:**
+   - Move cabinets along wall
+   - Rotate to test different arrangements
+   - Scale reference (show dimensions on-screen)
+   - See multiple cabinets together in space
+3. **AR Measurement Tools:**
+   - Measure wall lengths by pointing camera
+   - Auto-detect room corners
+   - Verify cabinet fit before building
+4. **AR Screenshots/Video:**
+   - Capture photo of virtual cabinets in real room
+   - Record video walkthrough
+   - Share with family/contractors for approval
+
+**Use Cases:**
+- **Pre-design:** Measure kitchen with AR ruler, input dimensions
+- **Design validation:** See if 36" cabinet fits next to fridge
+- **Client presentations:** Contractors show clients virtual cabinets
+- **Marketing:** "See before you build" feature in app store
+
+**Technical Challenges:**
+- Accurate plane detection on varied surfaces
+- Lighting/shadow matching for realism
+- Performance on older devices
+- Calibration for different camera sensors
+
+**Progressive Rollout:**
+- **V2.0:** Basic AR placement (single cabinet)
+- **V2.1:** Multi-cabinet AR (full kitchen)
+- **V2.2:** AR measurement tools
+- **V2.3:** Room scanning & auto-fit
+
+**Validation:** User opens AR mode, points camera at kitchen wall, places virtual 24" base cabinet, sees it matches physical space, confirms it fits next to existing appliances, takes screenshot to share with spouse.
 
 ---
 
@@ -248,7 +395,11 @@ export const FEATURE_FLAGS = {
   
   // Phase 4
   multiCabinetProjects: true,
+  layout2D: true,  // NEW
   projectSaveLoad: true,
+  
+  // Phase 4.5
+  cornerCabinets: true,  // NEW
   
   // Phase 5 - Pro Mode (unlock after 3 saved projects or manual toggle)
   joinerySelector: false,  // Tier 3
@@ -263,6 +414,10 @@ export const FEATURE_FLAGS = {
   // Phase 7
   pdfExport: true,
   costEstimation: true,
+  
+  // V2 Features
+  visualization3D: false,  // Phase 8
+  augmentedReality: false,  // Phase 9
 };
 ```
 
@@ -271,6 +426,7 @@ export const FEATURE_FLAGS = {
 - Advanced users can opt-in via settings
 - We can ship incomplete builds for testing
 - Easy to AB test feature complexity
+- V2 features can be beta-tested with subset of users
 
 ---
 
@@ -310,6 +466,20 @@ export const FEATURE_FLAGS = {
 │ reveals (1.5mm sides, 3mm top)  │
 │                                 │
 │      [Customize Reveals]        │  ← Only shows in Tier 3
+└─────────────────────────────────┘
+```
+
+### Pattern 4: "2D Layout Canvas" (NEW)
+```
+┌─────────────────────────────────┐
+│ Kitchen Layout          [+ Add] │
+│                                 │
+│  ╔═══╗ ╔═══╗ ╔═══╗             │
+│  ║ 18║ ║ 24║ ║ 18║  ← Cabinets │
+│  ╚═══╝ ╚═══╝ ╚═══╝             │
+│                                 │
+│  Total run: 60"                 │
+│  [2D View] [3D View] [AR View]  │  ← Mode toggles
 └─────────────────────────────────┘
 ```
 
@@ -353,6 +523,32 @@ export const FEATURE_FLAGS = {
 
 ---
 
+### Multi-Cabinet Validation Test (NEW)
+1. User creates base cabinet (24")
+2. Taps "Add Cabinet"
+3. Creates second cabinet (30")
+4. Switches to 2D Layout view
+5. Drags cabinets side-by-side
+6. Sees total run length (54")
+7. Gets combined cut list for both
+
+**Pass criteria:** Layout feels intuitive, combined cut list shows all parts from both cabinets with optimized sheet usage.
+
+---
+
+### Corner Cabinet Validation Test (NEW)
+1. User starts new kitchen project
+2. Adds 36" diagonal corner base
+3. Adds 24" base on left side
+4. Adds 30" base on right side
+5. 2D layout auto-snaps corner to wall intersection
+6. Cut list includes angled face pieces
+7. Lazy Susan hardware appears in shopping list
+
+**Pass criteria:** Corner cabinet integrates seamlessly, dimensions account for angled cuts, layout shows proper corner placement.
+
+---
+
 ## Implementation Priority: What to Build When
 
 ### Week 1-2: Foundation (Phase 1)
@@ -391,7 +587,7 @@ export const FEATURE_FLAGS = {
 
 ---
 
-### Week 4-5: Flexibility (Phase 3-4)
+### Week 4: Flexibility (Phase 3)
 **Claude Code tasks:**
 1. Project settings screen
    - Unit system toggle (Imperial/Metric)
@@ -399,14 +595,45 @@ export const FEATURE_FLAGS = {
    - Saw kerf input
 2. Custom dimension inputs (CabinetBuilder Tier 2 UI)
 3. Drawer builder screen (basic drawer box)
-4. Multi-cabinet project management
-5. SQLite persistence layer
+4. SQLite persistence layer (prep for multi-cabinet)
 
-**Deliverable:** Users can design custom cabinets and save projects.
+**Deliverable:** Users can design custom cabinets.
 
 ---
 
-### Week 6-7: Pro Mode (Phase 5)
+### Week 5-6: Multi-Cabinet & 2D Layout (Phase 4)
+**Claude Code tasks:**
+1. Project data model expansion (multiple cabinets per project)
+2. Cabinet list/management UI (add/edit/delete/duplicate)
+3. **2D Layout Canvas** (NEW - major feature):
+   - React Native SVG canvas for layout
+   - Cabinet drag-and-drop positioning
+   - Wall length measurement display
+   - Gap detection between cabinets
+   - Top-down view renderer
+4. Combined cut list aggregator
+5. Sheet optimizer multi-cabinet support
+
+**Deliverable:** Full kitchen design capability with visual layout.
+
+---
+
+### Week 6-7: Corner Cabinets (Phase 4.5)
+**Claude Code tasks:**
+1. Corner cabinet types (src/types - add DiagonalCorner, BlindCorner, NinetyCorner)
+2. Corner cabinet calculator (src/utils/cornerCabinetCalculator.ts)
+   - Diagonal face angle math
+   - Blind corner return depth logic
+   - 90° corner post/filler calculations
+3. Corner cabinet UI (type picker with diagrams)
+4. 2D layout corner snapping logic
+5. Hardware recommendations (lazy Susan, pull-outs)
+
+**Deliverable:** Corner cabinet support with proper geometry.
+
+---
+
+### Week 8-9: Pro Mode (Phase 5)
 **Claude Code tasks:**
 1. Joinery selector component
 2. Reveal customization screen
@@ -418,7 +645,7 @@ export const FEATURE_FLAGS = {
 
 ---
 
-### Week 8: Completion (Phase 6)
+### Week 10: Completion (Phase 6)
 **Claude Code tasks:**
 1. Door calculator (single/double logic)
 2. Drawer face calculator
@@ -428,14 +655,53 @@ export const FEATURE_FLAGS = {
 
 ---
 
-### Week 9-10: Production (Phase 7)
+### Week 11-12: Production (Phase 7)
 **Claude Code tasks:**
 1. PDF export (jsPDF integration)
+   - Include 2D layout view in PDF
 2. Cost estimation calculator
 3. Material shopping list generator
 4. CSV export
+5. Project sharing (export/import)
 
-**Deliverable:** Professional-quality output.
+**Deliverable:** Professional-quality output ready to share.
+
+---
+
+### Week 13-15: 3D Visualization (V2 - Phase 8)
+**Research & Planning:**
+- Evaluate Three.js vs Babylon.js for React Native
+- Test performance on mid-range Android devices
+- Design 3D cabinet mesh templates
+
+**Claude Code tasks:**
+1. 3D rendering engine integration (expo-gl + expo-three)
+2. Cabinet mesh generator (from dimensions → 3D geometry)
+3. Material/texture system (wood grain, hardware)
+4. 3D camera controls (orbit, pan, zoom)
+5. 3D scene composer (multi-cabinet kitchen view)
+6. Screenshot/export functionality
+
+**Deliverable:** Interactive 3D preview of cabinets and full kitchens.
+
+---
+
+### Week 16-18: Augmented Reality (V2 - Phase 9)
+**Research & Planning:**
+- ARKit/ARCore compatibility testing
+- Plane detection accuracy validation
+- Lighting estimation tuning
+
+**Claude Code tasks:**
+1. AR camera interface (expo-ar integration)
+2. Plane detection & surface tracking
+3. Cabinet placement system (tap-to-place)
+4. AR interaction controls (move/rotate cabinets)
+5. AR measurement tools (wall length, corner detection)
+6. AR capture (photo/video with virtual cabinets)
+7. AR calibration settings
+
+**Deliverable:** AR mode that overlays life-size cabinets in real rooms via phone camera.
 
 ---
 
@@ -449,11 +715,28 @@ export const FEATURE_FLAGS = {
 ### For Tier 2 Users (Customizers):
 - % who find "Advanced Options": > 60%
 - % who successfully customize dimensions: > 90%
+- **NEW:** % who use 2D layout view: > 50%
 
 ### For Tier 3 Users (Pros):
 - % who enable Pro Mode: 5-10%
 - % who use dado joinery: > 50% of Tier 3
 - % who report accurate dimensions: > 95%
+
+### For Multi-Cabinet Projects (NEW):
+- Average cabinets per project: 4-6
+- % of projects with corner cabinets: 30-40%
+- % who use 2D layout before cutting: > 70%
+
+### For V2 Features (3D & AR):
+- **3D Visualization:**
+  - % who view 3D at least once: > 60%
+  - % who prefer 3D over 2D for review: 20-30%
+  - 3D load time: < 3 seconds
+- **Augmented Reality:**
+  - % who try AR mode: 40-50% (mobile only)
+  - % who use AR for measurements: 20-30%
+  - % who share AR screenshots: 30-40%
+  - AR placement accuracy: ±2 inches
 
 ---
 
@@ -465,16 +748,27 @@ export const FEATURE_FLAGS = {
 3. **Drawer quantity:** Auto-suggest drawer count based on cabinet height, or require manual input?
 4. **Reveal presets:** Offer "tight" vs "standard" vs "loose" reveal presets before full customization?
 5. **Hardware integration:** Link to actual products (affiliate?) or just give specs?
+6. **2D layout grid:** Snap to 1" increments, or allow free placement?
+7. **Corner cabinet defaults:** Start with 36" diagonal only, or offer 42" option in Tier 1?
+8. **3D performance:** Minimum device specs for smooth 3D rendering?
+9. **AR accuracy:** How to handle rooms with poor lighting or dark walls?
 
 ### Variables We Might Be Missing:
 - **Edge banding:** Do we calculate edge banding length/quantity? (Probably Phase 6+)
 - **Back panel options:** Hardboard vs plywood vs shiplap? (Tier 3)
 - **Shelf quantity/adjustability:** Fixed shelves vs adjustable holes? (Phase 4)
-- **Corner cabinet support:** Lazy Susan mechanics? (V2 - complex geometry)
+- ~~**Corner cabinet support:** Lazy Susan mechanics? (V2 - complex geometry)~~ ← NOW PHASE 4.5
 - **Overlay types:** Full overlay vs inset vs partial? (Phase 6, Tier 3)
 - **Hinge types:** European cup vs butt hinges? (Phase 6)
 - **Finish allowances:** Does paint/stain thickness affect reveals? (Tier 3, edge case)
 - **Multi-sheet optimization:** What if parts don't fit on one sheet? (Phase 2 stretch goal)
+- **2D layout wall dimensions:** How to input room boundaries/obstacles?
+- **Cabinet spacing:** Auto-calculate fillers between non-standard gaps?
+- **Appliance integration:** Show fridge/stove/dishwasher in 2D/3D layout?
+- **Countertop overhang:** Does 2D layout show countertop edges?
+- **3D export formats:** OBJ, STL, or both for external CAD tools?
+- **AR room persistence:** Save AR placements between sessions?
+- **Multi-user collaboration:** Share projects for family/contractor input?
 
 ---
 
@@ -518,7 +812,7 @@ export const FEATURE_FLAGS = {
 
 **Blockers:** None
 
-**Notes:** Foundation is solid. Ready to build first tangible feature (cabinet calculation logic).
+**Notes:** Foundation is solid. Expanded plan now covers full kitchen design workflow (multi-cabinet projects, corner solutions, 2D layout) and V2 vision (3D visualization, AR preview). Ready to build first tangible feature (cabinet calculation logic).
 
 ---
 
@@ -529,6 +823,10 @@ export const FEATURE_FLAGS = {
 - Test on real DIYers (not just yourself) to validate Tier 1 simplicity
 - If you're confused by a term, your users will be too → simplify or hide in Tier 3
 - Every new input field is cognitive load → default it until proven necessary
+- **NEW:** Multi-cabinet projects are core to V1, not an afterthought — design single-cabinet features with multi-cabinet scaling in mind
+- **NEW:** Corner cabinets are complex but essential — don't skip them, but keep Tier 1 simple (diagonal only)
+- **NEW:** 2D layout is a differentiator — invest in polish here, it's what users will share on social media
+- **NEW:** 3D/AR are V2 — don't let them distract from shipping V1, but keep them in mind architecturally
 
 **When in doubt:**
 - Start with the simplest version that works
@@ -538,3 +836,6 @@ export const FEATURE_FLAGS = {
 
 **Philosophy:**
 > "A beginner should be able to design their first cabinet without knowing what a 'reveal' is. An expert should be able to specify reveals down to the millimeter. Both should feel the app was built for them."
+
+**Extended Philosophy (Multi-Cabinet & Visualization):**
+> "A DIYer should be able to layout their whole kitchen in 2D, see it in 3D, preview it in AR in their actual space, get a complete cut list and shopping list, and build it confidently — all from their phone while standing in their kitchen."
