@@ -1,5 +1,12 @@
 # KnippaCab Development Plan
 
+**Related Documentation:**
+- `SHEET_OPTIMIZER_RESEARCH.md` - Comprehensive competitive analysis and feature research (26KB)
+- `CLAUDE.md` - Technical context for Claude Code
+- `ROADMAP.md` - High-level product vision
+
+---
+
 ## Design Philosophy: Progressive Complexity
 
 **Core Principle:** Start users with "one-click" simplicity, reveal advanced controls as they gain confidence.
@@ -42,6 +49,7 @@ Like a video game tutorial: early levels give you one button to press, later lev
 - Material thickness picker (presets: 1/2", 5/8", 3/4")
 - Optional: Number of drawers
 - **NEW:** 2D layout view to arrange multiple cabinets side-by-side
+- **NEW:** Optimization mode toggle (Efficiency vs Guillotine) - see `SHEET_OPTIMIZER_RESEARCH.md`
 
 **What still uses defaults:**
 - Reveals (most users don't know what this means yet)
@@ -63,6 +71,9 @@ Like a video game tutorial: early levels give you one button to press, later lev
 - Dado depth settings (affects cut list dimensions)
 - Saw kerf adjustment
 - Manual grain direction override on any part
+- **NEW:** Edge banding tracking - see `SHEET_OPTIMIZER_RESEARCH.md` §14
+- **NEW:** Offcut management - see `SHEET_OPTIMIZER_RESEARCH.md` §7
+- **NEW:** Minimum offcut size setting - see `SHEET_OPTIMIZER_RESEARCH.md` Pain Point #6
 - **NEW:** Corner cabinet angle/depth customization
 - **NEW:** 3D cabinet preview (V2)
 - **NEW:** AR room visualization (V2)
@@ -97,31 +108,57 @@ Like a video game tutorial: early levels give you one button to press, later lev
 
 ---
 
-### **Phase 2: Sheet Goods Optimizer (Week 3)**
+### **Phase 2: Sheet Goods Optimizer (Week 3)** ⭐
 *Goal: The killer feature — visual cutting diagrams*
+
+**📚 Primary Reference:** `SHEET_OPTIMIZER_RESEARCH.md` - Full 26KB competitive analysis
 
 **Deliverable:** Tier 1 gets visual 2D cutting layouts.
 
-**Features:**
-1. Bin packing algorithm (implement guillotine or shelf algorithm)
-2. Grain direction constraints (vertical parts = vertical grain)
-3. SVG diagram renderer (React Native SVG)
-4. Sheet utilization percentage display
-5. Waste calculation
+**Features (Research-Validated):**
+1. **Guillotine bin packing algorithm** (see Research §Algorithm Considerations)
+   - Table-saw friendly edge-to-edge cuts
+   - First-Fit Decreasing Height variation
+   - 80-85% efficiency typical (competitive with alternatives)
+2. **Grain direction constraints** (see Research §2 - Critical Feature)
+   - Vertical parts = vertical grain (locked)
+   - Horizontal parts = horizontal grain (locked)
+   - Hidden parts = rotation allowed
+   - Visual grain arrows in diagram
+3. **SVG diagram renderer** (React Native SVG)
+   - Part labels with dimensions
+   - Grain direction indicators
+   - Color-coded by cabinet (multi-cabinet support)
+   - Cut sequence numbers (Guillotine mode)
+4. **Sheet utilization display**
+   - Percentage efficiency
+   - Waste area calculation
+   - Usable offcut identification
+5. **Conservative defaults** (see Research Pain Point #1)
+   - Blade kerf: 1/8" (3.175mm) default
+   - Accounts for kerf in all dimensions
+   - Prevents "says 1 sheet, needs 2" problem
 
 **What's still simple:**
-- Fixed sheet size: 4'x8' only
+- Fixed sheet size: 4'x8' only (1220×2440mm metric)
 - One material type
-- Auto-assigned grain direction
+- Auto-assigned grain direction (no manual override yet)
+- Efficiency mode only (Guillotine mode in Phase 3)
 
-**Validation:** Cut list from Phase 1 shows a labeled 2D diagram where to cut each part on a plywood sheet.
+**Research Insights Applied:**
+- Competitors achieve 85-95% efficiency, we target 80-85% with simpler Guillotine algorithm (trade-off: easier cutting sequences)
+- User pain point: "Can't follow cutting sequence" → we'll add cut numbers
+- User pain point: "Grain doesn't match" → auto-assign grain based on part type
+- See `SHEET_OPTIMIZER_RESEARCH.md` §Competitive Differentiation for full strategy
+
+**Validation:** Cut list from Phase 1 shows a labeled 2D diagram where to cut each part on a plywood sheet with grain arrows and numbered cuts.
 
 ---
 
 ### **Phase 3: Unit System & Customization (Week 4)**
 *Goal: Unlock Tier 2 for users who need it*
 
-**Deliverable:** Custom dimensions + unit switching.
+**Deliverable:** Custom dimensions + unit switching + optimization modes.
 
 **Features:**
 1. Imperial/Metric toggle in project settings
@@ -129,18 +166,23 @@ Like a video game tutorial: early levels give you one button to press, later lev
 3. Toe kick options (standard/custom/none)
 4. Material thickness picker
 5. Basic drawer support (drawer box only, no faces yet)
+6. **NEW: Optimization mode toggle** (see `SHEET_OPTIMIZER_RESEARCH.md` §5)
+   - Efficiency mode (minimize waste, complex cuts OK)
+   - Guillotine mode (practical table saw cuts, may have more waste)
+   - Cut preference selection (length cuts first / width cuts first)
 
 **What becomes flexible:**
 - Cabinet dimensions
 - Toe kick settings
 - Material thickness
+- Cutting optimization strategy
 
 **What's still defaulted:**
 - Reveals
 - Joinery method
-- Grain direction
+- Grain direction (still auto-assigned)
 
-**Validation:** User can create a 27.5" wide x 38" tall custom base cabinet with 5" toe kick.
+**Validation:** User can create a 27.5" wide × 38" tall custom base cabinet with 5" toe kick, select Guillotine mode for table-saw-friendly cuts.
 
 ---
 
@@ -161,6 +203,8 @@ Like a video game tutorial: early levels give you one button to press, later lev
    - Export layout as image/PDF
 4. **Combined cut list** across all cabinets
 5. **Sheet optimizer accounts for all parts** from all cabinets
+   - Color-coded by cabinet in diagram (see `SHEET_OPTIMIZER_RESEARCH.md` §6)
+   - Multi-sheet handling when needed (see Research §11)
 6. **Project save/load** (SQLite)
 
 **What becomes powerful:**
@@ -170,7 +214,7 @@ Like a video game tutorial: early levels give you one button to press, later lev
 - Edit individual cabinets independently
 - Detect spacing issues early
 
-**Validation:** User designs a 3-cabinet kitchen (24" sink base + two 18" bases), arranges them in 2D layout view to see total run length (66"), and gets one optimized cutting plan.
+**Validation:** User designs a 3-cabinet kitchen (24" sink base + two 18" bases), arranges them in 2D layout view to see total run length (66"), and gets one optimized cutting plan with parts color-coded by cabinet.
 
 ---
 
@@ -213,7 +257,7 @@ Like a video game tutorial: early levels give you one button to press, later lev
 ### **Phase 5: Joinery & Pro Features (Week 8-9)**
 *Goal: Unlock Tier 3 for woodworkers who know what they're doing*
 
-**Deliverable:** Full joinery control + reveal customization.
+**Deliverable:** Full joinery control + reveal customization + advanced optimizer features.
 
 **Features:**
 1. Joinery method selector (pocket hole / dado / butt / dowel)
@@ -223,17 +267,30 @@ Like a video game tutorial: early levels give you one button to press, later lev
 5. Material library (custom materials with costs)
 6. Saw kerf adjustment
 7. Assembly instructions adapted to joinery choice
+8. **NEW: Edge banding tracking** (see `SHEET_OPTIMIZER_RESEARCH.md` §4)
+   - Auto-detect visible edges
+   - Calculate linear feet needed
+   - Add to hardware shopping list
+   - Visual indicators on cutting diagram
+9. **NEW: Offcut management** (see Research §7)
+   - Save waste pieces from completed layouts
+   - Add to stock library
+   - Optimizer uses offcuts before new sheets
+10. **NEW: Minimum offcut size** (see Research Pain Point #6)
+    - User sets preferred minimum (e.g., 12"×12")
+    - Optimizer penalizes tiny unusable scraps
 
 **What becomes fully customizable:**
 - Every dimension that affects joinery
 - Material choices and costs
 - Hardware recommendations
+- Optimization strategy and constraints
 
 **What's still guided:**
 - Default suggestions based on skill level
 - Warnings for incompatible choices (e.g., dado + thin ply)
 
-**Validation:** A skilled woodworker can specify dado joints with 1/4" depth, custom reveals, and captured drawer bottoms, and get accurate dimensions.
+**Validation:** A skilled woodworker can specify dado joints with 1/4" depth, custom reveals, captured drawer bottoms, and minimum 12"×12" offcuts, and get accurate dimensions with realistic cutting plan.
 
 ---
 
@@ -264,8 +321,12 @@ Like a video game tutorial: early levels give you one button to press, later lev
 
 **Features:**
 1. PDF export (cut list + diagrams + 2D layout)
+   - Cutting diagrams with grain arrows, cut sequences
+   - Edge banding indicators (if enabled)
+   - Offcut identification
 2. Material cost estimation
 3. Hardware shopping list with quantities
+   - Includes edge banding linear feet (if tracked)
 4. Cut list export to CSV
 5. 2D cabinet wireframe preview per cabinet
 6. Print-friendly layouts
@@ -276,7 +337,7 @@ Like a video game tutorial: early levels give you one button to press, later lev
 - Take to the lumberyard with confidence
 - Estimate total project cost
 
-**Validation:** User exports a complete kitchen plan as PDF with 2D layout, cutting diagrams, and shopping list, estimates $800 in materials, and builds it successfully.
+**Validation:** User exports a complete kitchen plan as PDF with 2D layout, cutting diagrams (with grain arrows and cut sequences), edge banding requirements, and shopping list, estimates $800 in materials, and builds it successfully.
 
 ---
 
@@ -387,25 +448,34 @@ export const FEATURE_FLAGS = {
   
   // Phase 2
   sheetOptimizer: true,
+  grainDirectionConstraints: true,
+  cutSequenceNumbers: true,  // NEW - from research
   
   // Phase 3
   customDimensions: true,
   metricUnits: true,
   drawerSupport: true,
+  optimizationModeToggle: true,  // NEW - Efficiency vs Guillotine
   
   // Phase 4
   multiCabinetProjects: true,
-  layout2D: true,  // NEW
+  layout2D: true,
+  multiSheetSupport: true,  // NEW - from research
+  colorCodedParts: true,  // NEW - from research
   projectSaveLoad: true,
   
   // Phase 4.5
-  cornerCabinets: true,  // NEW
+  cornerCabinets: true,
   
   // Phase 5 - Pro Mode (unlock after 3 saved projects or manual toggle)
   joinerySelector: false,  // Tier 3
   revealCustomization: false,  // Tier 3
   dadoSettings: false,  // Tier 3
   materialLibrary: false,  // Tier 3
+  edgeBandingTracking: false,  // NEW - Tier 3
+  offcutManagement: false,  // NEW - Tier 3
+  minimumOffcutSize: false,  // NEW - Tier 3
+  manualLayoutAdjustment: false,  // NEW - Tier 3
   
   // Phase 6
   doorCalculator: true,
@@ -418,6 +488,8 @@ export const FEATURE_FLAGS = {
   // V2 Features
   visualization3D: false,  // Phase 8
   augmentedReality: false,  // Phase 9
+  dxfExport: false,  // V2 - CNC integration (see Research §14)
+  advancedCNCMode: false,  // V2 - nested parts, tabs (see Research §14)
 };
 ```
 
@@ -453,6 +525,7 @@ export const FEATURE_FLAGS = {
 │   Joinery: Pocket Holes ▼       │
 │   Toe Kick: Standard 4" ▼       │
 │   Material: 3/4" Plywood ▼      │
+│   Optimization: Guillotine ▼    │  ← NEW
 │                                 │
 └─────────────────────────────────┘
 ```
@@ -483,6 +556,21 @@ export const FEATURE_FLAGS = {
 └─────────────────────────────────┘
 ```
 
+### Pattern 5: "Optimization Mode Toggle" (NEW - from Research)
+```
+┌─────────────────────────────────┐
+│ Cutting Optimization            │
+│                                 │
+│ ● Guillotine (Table Saw)        │  ← Default for DIY
+│   Simple cuts, easy to follow   │
+│                                 │
+│ ○ Efficiency (Advanced)         │
+│   Minimum waste, complex cuts   │
+│                                 │
+│   Cut Preference: Length ▼      │  ← Shows if Guillotine
+└─────────────────────────────────┘
+```
+
 ---
 
 ## Testing Strategy: Validate Each Tier
@@ -505,9 +593,10 @@ export const FEATURE_FLAGS = {
 3. Finds "Advanced Options" toggle
 4. Enters custom width
 5. Adjusts toe kick to 5"
-6. Gets accurate cut list
+6. Selects "Guillotine" optimization for table saw
+7. Gets accurate cut list with numbered cutting sequence
 
-**Pass criteria:** User sees 2-3 new options, not 20. Still feels in control.
+**Pass criteria:** User sees 2-3 new options, not 20. Still feels in control. Cutting diagram shows practical cut sequence.
 
 ---
 
@@ -517,9 +606,13 @@ export const FEATURE_FLAGS = {
 3. Selects dado joinery
 4. Sets 1/4" dado depth
 5. Customizes reveals to 2mm
-6. Cut list reflects dado depth in dimensions
+6. Enables edge banding tracking
+7. Sets minimum offcut size to 12"×12"
+8. Cut list reflects dado depth in dimensions
+9. Cutting diagram shows edge banding indicators
+10. Offcuts larger than 12"×12" preserved
 
-**Pass criteria:** Every dimension is adjustable, nothing feels locked down.
+**Pass criteria:** Every dimension is adjustable, nothing feels locked down. Advanced features work correctly.
 
 ---
 
@@ -531,8 +624,9 @@ export const FEATURE_FLAGS = {
 5. Drags cabinets side-by-side
 6. Sees total run length (54")
 7. Gets combined cut list for both
+8. Cutting diagram shows parts color-coded by cabinet
 
-**Pass criteria:** Layout feels intuitive, combined cut list shows all parts from both cabinets with optimized sheet usage.
+**Pass criteria:** Layout feels intuitive, combined cut list shows all parts from both cabinets with optimized sheet usage, color coding helps identify which parts belong to which cabinet.
 
 ---
 
@@ -546,6 +640,29 @@ export const FEATURE_FLAGS = {
 7. Lazy Susan hardware appears in shopping list
 
 **Pass criteria:** Corner cabinet integrates seamlessly, dimensions account for angled cuts, layout shows proper corner placement.
+
+---
+
+### Sheet Optimizer Validation Test (NEW - from Research)
+1. User creates 4-cabinet kitchen project
+2. All parts auto-generate with grain directions
+3. Optimizer runs (< 5 seconds for 40 parts)
+4. Cutting diagram shows:
+   - Parts arranged efficiently (>80% utilization)
+   - Grain arrows on all parts
+   - Cut sequence numbers (Guillotine mode)
+   - Parts color-coded by cabinet
+   - Waste areas shaded
+5. User switches to Efficiency mode
+6. Diagram updates with different layout (higher utilization, more complex cuts)
+7. User exports PDF with diagrams
+
+**Pass criteria:** 
+- Optimization completes quickly
+- Grain constraints respected (vertical parts never rotated)
+- Guillotine mode produces table-saw-friendly cuts
+- Efficiency mode achieves >85% utilization
+- PDF export includes all diagrams with labels
 
 ---
 
@@ -570,20 +687,39 @@ export const FEATURE_FLAGS = {
 
 ---
 
-### Week 3: Optimizer (Phase 2)
+### Week 3: Optimizer (Phase 2) ⭐
+**📚 Before starting: Read `SHEET_OPTIMIZER_RESEARCH.md` in full**
+
 **Claude Code tasks:**
 1. Sheet optimizer module (src/utils/sheetOptimizer.ts)
-   - Bin packing algorithm
-   - Grain direction constraints
-   - Returns layout coordinates
+   - **Guillotine bin packing algorithm** (see Research §Algorithm Considerations)
+   - Grain direction constraints (see Research §2)
+   - Returns layout coordinates with cut sequences
+   - TypeScript interfaces from Research §Implementation Recommendations
 2. Cutting diagram component (React Native SVG)
-   - Renders 4'x8' sheet
+   - Renders 4'x8' sheet (or 1220×2440mm)
    - Draws rectangles for each part
-   - Labels with part names
-   - Shows grain direction with arrows
+   - Labels with part names and dimensions
+   - Shows grain direction with arrows (see Research §2)
+   - Shows cut sequence numbers (see Research §6)
+   - Color-codes by cabinet (multi-cabinet prep)
 3. Waste calculation display
+   - Utilization percentage
+   - Waste area in sq ft or sq m
+   - Identify usable offcuts
 
-**Deliverable:** Cut list includes visual diagram.
+**Key Research Insights to Apply:**
+- Conservative kerf default (1/8" = 3.175mm)
+- Auto-assign grain based on part type (sides=vertical, tops=horizontal)
+- Cut sequence numbering solves major user pain point
+- Target 80-85% efficiency (realistic for Guillotine algorithm)
+
+**Algorithm Resources (from Research):**
+- Consider `bin-packing` npm package (evaluate if it supports grain constraints)
+- Or implement custom Guillotine First-Fit Decreasing Height
+- See Research §Algorithm Considerations for pseudocode
+
+**Deliverable:** Cut list includes visual diagram with grain arrows, cut numbers, and efficiency stats.
 
 ---
 
@@ -596,8 +732,12 @@ export const FEATURE_FLAGS = {
 2. Custom dimension inputs (CabinetBuilder Tier 2 UI)
 3. Drawer builder screen (basic drawer box)
 4. SQLite persistence layer (prep for multi-cabinet)
+5. **NEW: Optimization mode toggle** (see `SHEET_OPTIMIZER_RESEARCH.md` §5)
+   - Guillotine vs Efficiency mode UI
+   - Cut preference selector (length/width first) for Guillotine
+   - Update optimizer to support both algorithms
 
-**Deliverable:** Users can design custom cabinets.
+**Deliverable:** Users can design custom cabinets and choose optimization strategy.
 
 ---
 
@@ -613,8 +753,10 @@ export const FEATURE_FLAGS = {
    - Top-down view renderer
 4. Combined cut list aggregator
 5. Sheet optimizer multi-cabinet support
+   - **Color-code parts by cabinet** (see `SHEET_OPTIMIZER_RESEARCH.md` §6)
+   - Multi-sheet handling (see Research §11)
 
-**Deliverable:** Full kitchen design capability with visual layout.
+**Deliverable:** Full kitchen design capability with visual layout and color-coded cutting diagrams.
 
 ---
 
@@ -634,14 +776,28 @@ export const FEATURE_FLAGS = {
 ---
 
 ### Week 8-9: Pro Mode (Phase 5)
+**📚 Reference: `SHEET_OPTIMIZER_RESEARCH.md` §Advanced Features**
+
 **Claude Code tasks:**
 1. Joinery selector component
 2. Reveal customization screen
 3. Dado dimension calculator (adjusts cut list)
 4. Material library (CRUD for custom materials)
 5. Drawer construction options UI
+6. **NEW: Edge banding tracker** (see Research §4)
+   - Auto-detect visible edges on parts
+   - Calculate linear feet needed
+   - Add to hardware shopping list
+   - Show indicators on cutting diagram
+7. **NEW: Offcut management** (see Research §7)
+   - Save waste pieces from layouts
+   - Stock library with offcut dimensions
+   - Optimizer uses offcuts before new sheets
+8. **NEW: Minimum offcut size setting** (see Research Pain Point #6)
+   - User preference for minimum useful size
+   - Optimizer penalizes tiny scraps
 
-**Deliverable:** Experienced users have full control.
+**Deliverable:** Experienced users have full control over optimization, edge banding, and material reuse.
 
 ---
 
@@ -659,8 +815,11 @@ export const FEATURE_FLAGS = {
 **Claude Code tasks:**
 1. PDF export (jsPDF integration)
    - Include 2D layout view in PDF
+   - Cutting diagrams with grain arrows and cut sequences
+   - Edge banding indicators (if enabled)
 2. Cost estimation calculator
 3. Material shopping list generator
+   - Includes edge banding linear feet
 4. CSV export
 5. Project sharing (export/import)
 
@@ -711,21 +870,31 @@ export const FEATURE_FLAGS = {
 - Time to first cut list: < 2 minutes
 - % who complete first cabinet: > 80%
 - % who feel overwhelmed: < 10%
+- **NEW (Research-validated):** % who understand cutting diagram on first view: > 70%
 
 ### For Tier 2 Users (Customizers):
 - % who find "Advanced Options": > 60%
 - % who successfully customize dimensions: > 90%
 - **NEW:** % who use 2D layout view: > 50%
+- **NEW:** % who try both optimization modes: > 30%
 
 ### For Tier 3 Users (Pros):
 - % who enable Pro Mode: 5-10%
 - % who use dado joinery: > 50% of Tier 3
 - % who report accurate dimensions: > 95%
+- **NEW:** % who use offcut management: > 40% of Tier 3
+- **NEW:** % who enable edge banding tracking: > 60% of Tier 3
 
 ### For Multi-Cabinet Projects (NEW):
 - Average cabinets per project: 4-6
 - % of projects with corner cabinets: 30-40%
 - % who use 2D layout before cutting: > 70%
+
+### For Sheet Optimizer (Research-Validated):
+- Average utilization percentage: > 82% (Guillotine), > 88% (Efficiency)
+- Optimization time for 50 parts: < 5 seconds
+- % who find cutting sequence helpful: > 75%
+- % who say optimizer prevented waste: > 65%
 
 ### For V2 Features (3D & AR):
 - **3D Visualization:**
@@ -752,16 +921,17 @@ export const FEATURE_FLAGS = {
 7. **Corner cabinet defaults:** Start with 36" diagonal only, or offer 42" option in Tier 1?
 8. **3D performance:** Minimum device specs for smooth 3D rendering?
 9. **AR accuracy:** How to handle rooms with poor lighting or dark walls?
+10. **NEW (from Research):** Should we show CNC-specific optimization mode in V1, or wait for V2 DXF export?
 
 ### Variables We Might Be Missing:
-- **Edge banding:** Do we calculate edge banding length/quantity? (Probably Phase 6+)
+- **Edge banding:** ~~Do we calculate edge banding length/quantity?~~ ✅ **YES - Phase 5 (Research §4)**
 - **Back panel options:** Hardboard vs plywood vs shiplap? (Tier 3)
 - **Shelf quantity/adjustability:** Fixed shelves vs adjustable holes? (Phase 4)
-- ~~**Corner cabinet support:** Lazy Susan mechanics? (V2 - complex geometry)~~ ← NOW PHASE 4.5
+- ~~**Corner cabinet support:** Lazy Susan mechanics?~~ ✅ **NOW PHASE 4.5**
 - **Overlay types:** Full overlay vs inset vs partial? (Phase 6, Tier 3)
 - **Hinge types:** European cup vs butt hinges? (Phase 6)
 - **Finish allowances:** Does paint/stain thickness affect reveals? (Tier 3, edge case)
-- **Multi-sheet optimization:** What if parts don't fit on one sheet? (Phase 2 stretch goal)
+- **Multi-sheet optimization:** ~~What if parts don't fit on one sheet?~~ ✅ **Phase 4 (Research §11)**
 - **2D layout wall dimensions:** How to input room boundaries/obstacles?
 - **Cabinet spacing:** Auto-calculate fillers between non-standard gaps?
 - **Appliance integration:** Show fridge/stove/dishwasher in 2D/3D layout?
@@ -769,34 +939,51 @@ export const FEATURE_FLAGS = {
 - **3D export formats:** OBJ, STL, or both for external CAD tools?
 - **AR room persistence:** Save AR placements between sessions?
 - **Multi-user collaboration:** Share projects for family/contractor input?
+- **NEW (from Research):** Linear material optimization (boards, trim) - worth V1 or V2?
+- **NEW (from Research):** DXF export priority - how many users actually need CNC integration?
+- **NEW (from Research):** Offcut photos with camera integration - valuable or overkill?
+- **NEW (from Research):** Grain matching sets for adjacent parts - too niche?
 
 ---
 
 ## Communication Between Claude Instances
 
 ### For Claude Code:
-**File to check first:** `DEVELOPMENT_PLAN.md` → see current phase and priority tasks.
+**Files to check first:**
+1. `DEVELOPMENT_PLAN.md` (this file) → see current phase and priority tasks
+2. `SHEET_OPTIMIZER_RESEARCH.md` → detailed competitive analysis and implementation guidance
+3. `CLAUDE.md` → technical context
 
 **When starting a session:**
 1. Check git log for last commit message (shows completed features)
 2. Read current phase section in this file
-3. Implement next task in the priority list
-4. Update this file's "Current Status" section (below) when completing a phase
+3. **If working on Phase 2-5:** Read relevant sections of `SHEET_OPTIMIZER_RESEARCH.md`
+4. Implement next task in the priority list
+5. Update this file's "Current Status" section (below) when completing a phase
+
+**Phase 2 Specific (Sheet Optimizer):**
+- Read `SHEET_OPTIMIZER_RESEARCH.md` IN FULL before writing code
+- Use TypeScript interfaces from Research §Implementation Recommendations
+- Follow algorithm guidance from Research §Algorithm Considerations
+- Apply user pain point solutions from Research §Competitive Differentiation
 
 ### For Claude.ai:
-**File to reference:** This file + `CLAUDE.md` for technical decisions.
+**Files to reference:**
+1. This file + `CLAUDE.md` for technical decisions
+2. `SHEET_OPTIMIZER_RESEARCH.md` for optimizer feature planning
 
 **When planning features:**
 1. Check which phase we're in
 2. Ensure new features match the tier system
 3. Don't over-engineer for Tier 3 when building Tier 1
 4. Consider progressive disclosure in every UI decision
+5. **Reference research when discussing optimizer features**
 
 ---
 
 ## Current Status
 
-**Last Updated:** 2026-02-07
+**Last Updated:** 2026-02-08
 
 **Completed:**
 - ✅ Project scaffolding (Expo + dependencies)
@@ -805,6 +992,7 @@ export const FEATURE_FLAGS = {
 - ✅ TypeScript types (src/types/index.ts)
 - ✅ Cabinet constants (src/constants/cabinetDefaults.ts)
 - ✅ Navigation setup + placeholder screens
+- ✅ **Sheet optimizer competitive research** (SHEET_OPTIMIZER_RESEARCH.md - 26KB analysis)
 
 **Current Phase:** Phase 1 - Minimal Viable Cabinet
 
@@ -812,7 +1000,21 @@ export const FEATURE_FLAGS = {
 
 **Blockers:** None
 
-**Notes:** Foundation is solid. Expanded plan now covers full kitchen design workflow (multi-cabinet projects, corner solutions, 2D layout) and V2 vision (3D visualization, AR preview). Ready to build first tangible feature (cabinet calculation logic).
+**Notes:** 
+- Foundation is solid
+- Comprehensive sheet optimizer research completed (Feb 8, 2026)
+- Research validates that sheet optimizer is THE killer feature
+- Clear implementation path: Guillotine algorithm for V1, color-coded diagrams, cut sequences
+- Expanded plan now covers full kitchen design workflow (multi-cabinet projects, corner solutions, 2D layout) and V2 vision (3D visualization, AR preview)
+- Ready to build first tangible feature (cabinet calculation logic)
+
+**Research Findings Summary:**
+- Competitors charge $50-300/year; our $39-49 one-time price is highly competitive
+- User pain points: unrealistic cuts, poor grain handling, complex UIs
+- Guillotine algorithm prioritizes practical table-saw cuts over maximum efficiency
+- Color-coding parts by cabinet solves shop organization problem
+- Edge banding tracking, offcut management are valuable Tier 3 features
+- See `SHEET_OPTIMIZER_RESEARCH.md` for full 26KB analysis
 
 ---
 
@@ -827,6 +1029,7 @@ export const FEATURE_FLAGS = {
 - **NEW:** Corner cabinets are complex but essential — don't skip them, but keep Tier 1 simple (diagonal only)
 - **NEW:** 2D layout is a differentiator — invest in polish here, it's what users will share on social media
 - **NEW:** 3D/AR are V2 — don't let them distract from shipping V1, but keep them in mind architecturally
+- **NEW (Research):** Sheet optimizer is THE killer feature — read SHEET_OPTIMIZER_RESEARCH.md before Phase 2
 
 **When in doubt:**
 - Start with the simplest version that works
@@ -834,8 +1037,19 @@ export const FEATURE_FLAGS = {
 - Learn what users actually need
 - Add granularity based on real feedback
 
+**When building the sheet optimizer (Phase 2):**
+- Read `SHEET_OPTIMIZER_RESEARCH.md` first (don't skip this!)
+- Guillotine algorithm = table-saw friendly (our differentiator)
+- Grain direction auto-assignment prevents user errors
+- Cut sequence numbers solve major user pain point
+- Target 80-85% efficiency (don't over-optimize for 2% gains)
+- Color-coding by cabinet = unique feature vs competitors
+
 **Philosophy:**
 > "A beginner should be able to design their first cabinet without knowing what a 'reveal' is. An expert should be able to specify reveals down to the millimeter. Both should feel the app was built for them."
 
 **Extended Philosophy (Multi-Cabinet & Visualization):**
 > "A DIYer should be able to layout their whole kitchen in 2D, see it in 3D, preview it in AR in their actual space, get a complete cut list and shopping list, and build it confidently — all from their phone while standing in their kitchen."
+
+**Research-Validated Philosophy (Sheet Optimizer):**
+> "Practical cutting sequences matter more than squeezing out 2% efficiency. A DIYer with a table saw needs edge-to-edge cuts they can follow. The grain needs to look right. The parts need to be labeled clearly. Efficiency is great, but usability is better."
