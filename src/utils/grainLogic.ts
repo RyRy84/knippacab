@@ -50,7 +50,8 @@ import { GrainDirection } from '../types';
 const VERTICAL_GRAIN_PREFIXES: readonly string[] = [
   'Left Side',
   'Right Side',
-  'Drawer Side',
+  'Drawer Left Side',
+  'Drawer Right Side',
 ];
 
 /**
