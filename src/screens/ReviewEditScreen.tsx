@@ -59,12 +59,14 @@ function CabinetCard({
   units,
   onDelete,
   onAddDrawers,
+  drawerCount,
 }: {
   cabinet: Cabinet;
   index: number;
   units: MeasurementUnit;
   onDelete: () => void;
   onAddDrawers: () => void;
+  drawerCount: number;
 }) {
   const fmt = (mm: number) => formatForDisplay(mm, units);
 
@@ -105,6 +107,12 @@ function CabinetCard({
           {toeKickLabel}
         </Text>
       )}
+      {drawerCount > 0 && (
+        <Text style={styles.cardDetail}>
+          <Text style={styles.cardDetailLabel}>Drawers: </Text>
+          {drawerCount} {drawerCount === 1 ? 'drawer' : 'drawers'}
+        </Text>
+      )}
 
       {/* ── Add Drawers link ──────────────────────────────────────────── */}
       <TouchableOpacity style={styles.addDrawersBtn} onPress={onAddDrawers}>
@@ -121,6 +129,7 @@ function CabinetCard({
 export default function ReviewEditScreen({ navigation }: Props) {
   const currentProject = useProjectStore(s => s.currentProject);
   const cabinets       = useProjectStore(s => s.cabinets);
+  const drawers        = useProjectStore(s => s.drawers);
   const deleteCabinet  = useProjectStore(s => s.deleteCabinet);
 
   const units: MeasurementUnit = currentProject?.units ?? 'imperial';
@@ -155,7 +164,7 @@ export default function ReviewEditScreen({ navigation }: Props) {
         <Text style={styles.cabinetCount}>
           {cabinets.length === 0
             ? 'No cabinets added yet'
-            : `${cabinets.length} ${cabinets.length === 1 ? 'cabinet' : 'cabinets'}`}
+            : `${cabinets.length} ${cabinets.length === 1 ? 'cabinet' : 'cabinets'}${drawers.length > 0 ? `  ·  ${drawers.length} ${drawers.length === 1 ? 'drawer' : 'drawers'}` : ''}`}
         </Text>
       </View>
 
@@ -184,6 +193,7 @@ export default function ReviewEditScreen({ navigation }: Props) {
               units={units}
               onDelete={() => handleDelete(cabinet, index)}
               onAddDrawers={() => navigation.navigate('DrawerBuilder', { cabinetId: cabinet.id })}
+              drawerCount={drawers.filter(d => d.cabinetId === cabinet.id).length}
             />
           ))
         )}

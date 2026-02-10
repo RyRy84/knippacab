@@ -30,6 +30,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useProjectStore } from '../store/projectStore';
 import { Part, MeasurementUnit, GrainDirection } from '../types';
 import { calculateCabinetParts } from '../utils/cabinetCalculator';
+import { calculateDrawerParts } from '../utils/drawerCalculator';
 import { formatForDisplay } from '../utils/unitConversion';
 
 type Props = {
@@ -169,19 +170,22 @@ export default function CuttingPlanScreen({ navigation }: Props) {
   // See CLAUDE.md "Known Web Gotchas" for the reason.
   const currentProject = useProjectStore(s => s.currentProject);
   const cabinets       = useProjectStore(s => s.cabinets);
+  const drawers        = useProjectStore(s => s.drawers);
 
   const units: MeasurementUnit = currentProject?.units ?? 'imperial';
 
-  // ── Collect all parts from all cabinets ────────────────────────────────
-  // useMemo so we don't recalculate on every render — only when cabinets change.
+  // ── Collect all parts from all cabinets + drawers ──────────────────────
+  // useMemo so we don't recalculate on every render.
   const allParts: Part[] = useMemo(() => {
     const parts: Part[] = [];
     for (const cabinet of cabinets) {
-      const cabinetParts = calculateCabinetParts(cabinet);
-      parts.push(...cabinetParts);
+      parts.push(...calculateCabinetParts(cabinet));
+    }
+    for (const drawer of drawers) {
+      parts.push(...calculateDrawerParts(drawer));
     }
     return parts;
-  }, [cabinets]);
+  }, [cabinets, drawers]);
 
   // ── Group parts by material ────────────────────────────────────────────
   // Map preserves insertion order, so groups appear in the order we first
@@ -228,6 +232,7 @@ export default function CuttingPlanScreen({ navigation }: Props) {
         </Text>
         <Text style={styles.summaryStats}>
           {cabinets.length} {cabinets.length === 1 ? 'cabinet' : 'cabinets'}
+          {drawers.length > 0 ? `  ·  ${drawers.length} ${drawers.length === 1 ? 'drawer' : 'drawers'}` : ''}
           {'  ·  '}
           {totalPieces} {totalPieces === 1 ? 'piece' : 'pieces'} total
         </Text>

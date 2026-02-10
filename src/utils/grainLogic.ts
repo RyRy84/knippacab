@@ -50,19 +50,25 @@ import { GrainDirection } from '../types';
 const VERTICAL_GRAIN_PREFIXES: readonly string[] = [
   'Left Side',
   'Right Side',
-  'Drawer Left Side',
-  'Drawer Right Side',
   'Door',             // matches 'Door', 'Door Left', 'Door Right' — always vertical
 ];
 
 /**
  * Parts that MUST have HORIZONTAL grain (grain runs left-to-right when installed).
  * These are wide, horizontal panels where the grain should flow with the width.
+ *
+ * DRAWER SIDES: The long dimension of a drawer side is its depth (front-to-back,
+ * e.g. 18-20").  That dimension runs horizontally when installed, so the grain
+ * must also run horizontally to follow the long axis — just like the front/back.
+ * A drawer side with vertical grain would show grain running across the short
+ * height (4-6"), which wastes veneer and looks wrong once installed.
  */
 const HORIZONTAL_GRAIN_PREFIXES: readonly string[] = [
   'Top Panel',
   'Bottom Panel',
   'Shelf',
+  'Drawer Left Side',
+  'Drawer Right Side',
   'Drawer Front',
   'Drawer Back',
   'Drawer Face',      // drawer face panels are typically wider than tall → horizontal

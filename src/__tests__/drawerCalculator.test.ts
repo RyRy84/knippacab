@@ -113,10 +113,10 @@ describe('calculateDrawerParts — height variation', () => {
 // ─── Grain directions ─────────────────────────────────────────────────────────
 
 describe('calculateDrawerParts — grain directions', () => {
-  test('drawer sides have vertical grain', () => {
+  test('drawer sides have horizontal grain (long axis = depth, runs front-to-back)', () => {
     const parts = calculateDrawerParts(makeDrawer());
     const side = parts.find(p => p.name === 'Drawer Left Side');
-    expect(side?.grainDirection).toBe('vertical');
+    expect(side?.grainDirection).toBe('horizontal');
   });
 
   test('drawer front/back have horizontal grain', () => {

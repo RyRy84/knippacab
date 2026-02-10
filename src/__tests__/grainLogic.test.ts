@@ -19,12 +19,12 @@ describe('assignGrainDirection', () => {
     expect(assignGrainDirection('Right Side')).toBe('vertical');
   });
 
-  test('Drawer Left Side → vertical', () => {
-    expect(assignGrainDirection('Drawer Left Side')).toBe('vertical');
+  test('Drawer Left Side → horizontal (long axis = depth, runs front-to-back)', () => {
+    expect(assignGrainDirection('Drawer Left Side')).toBe('horizontal');
   });
 
-  test('Drawer Right Side → vertical', () => {
-    expect(assignGrainDirection('Drawer Right Side')).toBe('vertical');
+  test('Drawer Right Side → horizontal (long axis = depth, runs front-to-back)', () => {
+    expect(assignGrainDirection('Drawer Right Side')).toBe('horizontal');
   });
 
   test('Top Panel → horizontal', () => {

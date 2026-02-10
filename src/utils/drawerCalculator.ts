@@ -234,7 +234,7 @@ function calculateBaseDrawerDimensions(drawer: Drawer): PartInput[] {
       thickness,
       quantity: 1,
       material,
-      grainDirection: 'vertical' as const,
+      grainDirection: 'horizontal' as const,  // long axis = depth (front-to-back) → horizontal grain
       notes: '',
     },
     {
@@ -245,7 +245,7 @@ function calculateBaseDrawerDimensions(drawer: Drawer): PartInput[] {
       thickness,
       quantity: 1,
       material,
-      grainDirection: 'vertical' as const,
+      grainDirection: 'horizontal' as const,  // long axis = depth (front-to-back) → horizontal grain
       notes: '',
     },
     {
