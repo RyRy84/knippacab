@@ -112,11 +112,9 @@ function CabinetCard({
 // =============================================================================
 
 export default function ReviewEditScreen({ navigation }: Props) {
-  const { currentProject, cabinets, deleteCabinet } = useProjectStore(s => ({
-    currentProject:  s.currentProject,
-    cabinets:        s.cabinets,
-    deleteCabinet:   s.deleteCabinet,
-  }));
+  const currentProject = useProjectStore(s => s.currentProject);
+  const cabinets       = useProjectStore(s => s.cabinets);
+  const deleteCabinet  = useProjectStore(s => s.deleteCabinet);
 
   const units: MeasurementUnit = currentProject?.units ?? 'imperial';
 

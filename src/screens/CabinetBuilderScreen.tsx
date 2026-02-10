@@ -78,10 +78,8 @@ const TOE_KICK_OPTIONS: { value: ToeKickOption; label: string }[] = [
 // =============================================================================
 
 export default function CabinetBuilderScreen({ navigation }: Props) {
-  const { currentProject, addCabinet } = useProjectStore(s => ({
-    currentProject: s.currentProject,
-    addCabinet: s.addCabinet,
-  }));
+  const currentProject = useProjectStore(s => s.currentProject);
+  const addCabinet     = useProjectStore(s => s.addCabinet);
 
   const [cabinetType, setCabinetType] = useState<CabinetType>('base');
   const [widthIn, setWidthIn]         = useState('');              // user types inches
