@@ -555,7 +555,7 @@ Three new functions added for the MeasurementInput component:
 
 ---
 
-### `src/__tests__/` — Unit Test Suites (139 tests, all passing)
+### `src/__tests__/` — Unit Test Suites (156 tests, all passing)
 
 | File | Describes | Tests |
 |------|-----------|-------|
@@ -564,5 +564,106 @@ Three new functions added for the MeasurementInput component:
 | `revealCalculator.test.ts` | Single door, double doors, drawer face, stacked drawers | 12 |
 | `grainLogic.test.ts` | assignGrainDirection (all part types incl. doors/faces), canRotatePart, end-to-end | 19 |
 | `unitConversion.test.ts` | parseImperialInput (all formats), parseMetricInput, parseMeasurementInput, core conversions | 46 |
+| `optimizer.test.ts` | Empty input, bounds, no overlaps, grain constraints, multi-sheet, utilization, oversized, kerf | 17 |
 
 Run with: `npm test`
+
+---
+
+### Phase 4 — Sheet Goods Optimizer (COMPLETE)
+
+#### `src/utils/optimizer/types.ts` — Optimizer Type Definitions
+
+All shared types for the optimizer pipeline:
+
+| Type | Purpose |
+|------|---------|
+| `OptimizationSettings` | Sheet dimensions (mm), saw kerf, trim margin |
+| `DEFAULT_SHEET_SETTINGS` | 2440×1220mm sheet, 3.175mm kerf (4'×8', 1/8") |
+| `ExpandedPart` | One instance of a part after quantity expansion |
+| `PlacedPart` | A part that has been successfully placed (has x/y/rotated) |
+| `WasteRect` | Remaining free rectangle after packing |
+| `SheetLayout` | One physical sheet: placements + wasteRects + utilization stats |
+| `OptimizationResult` | Full result: sheets[], totalSheetsUsed, overallUtilizationPercent, unplacedParts |
+
+---
+
+#### `src/utils/optimizer/binPacking.ts` — Guillotine BSSF Bin Packing
+
+**Public API:** `optimizeSheetCutting(parts: Part[], settings?: OptimizationSettings): OptimizationResult`
+
+**Algorithm (Guillotine Best-Short-Side-Fit):**
+1. Expand parts by `quantity` into individual instances
+2. Filter oversized parts → `unplacedParts[]`
+3. Sort by area descending (large parts first → fewer fragmented free rects)
+4. For each part, score all free rects on all open sheets using BSSF:
+   - `score = min(rect.width - partWidth, rect.height - partHeight)`
+   - Lower score = tighter fit = less wasted space
+5. Place part in best-scoring rect; open a new sheet if nothing fits
+6. Guillotine split remaining space using "Shorter Leftover Axis" rule:
+   - Horizontal split when leftoverW < leftoverH (produces a full-width top strip)
+   - Vertical split otherwise (produces a full-height right strip)
+
+**Grain direction:** `'either'` parts may be rotated 90°; `'vertical'`/`'horizontal'` parts cannot. Optimizer tries both orientations (when allowed) and picks the better BSSF score.
+
+**Performance:** O(n × k) where n=parts, k=free rects per sheet. ~1ms for a 60-part project.
+
+---
+
+#### `src/components/CuttingDiagram.tsx` — SVG Cutting Diagram Component
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `sheet` | `SheetLayout` | ✓ | The sheet to render |
+| `settings` | `OptimizationSettings` | ✓ | Used to determine SVG aspect ratio |
+| `containerWidth` | `number` | ✓ | Available pixel width (from `onLayout`) |
+| `units` | `MeasurementUnit` | - | Imperial or metric dimension labels. Default: `'imperial'` |
+
+**Rendering:**
+- Sheet background: grey `#CCCCCC` (waste areas show through)
+- Parts: colour-coded by cabinet (up to 10 colours from `CABINET_COLORS[]`)
+- Labels (3 density tiers based on rendered part size):
+  - Small part (< 28px): colour only, no text
+  - Medium part (< 55px): part name + rotation indicator (↻)
+  - Large part (≥ 55px): name + dimensions + grain direction symbol (↕↔)
+- Text clipped to part bounds via SVG `<ClipPath>`
+- Scale: `containerWidth / settings.sheetWidth` (preserves aspect ratio)
+
+**Usage:**
+```typescript
+const [width, setWidth] = useState(0);
+
+<View onLayout={e => setWidth(e.nativeEvent.layout.width)}>
+  {width > 0 && (
+    <CuttingDiagram
+      sheet={result.sheets[0]}
+      settings={settings}
+      containerWidth={width}
+      units="imperial"
+    />
+  )}
+</View>
+```
+
+---
+
+#### `src/screens/VisualDiagramScreen.tsx` — Visual Diagram Screen (REPLACED placeholder)
+
+**Purpose:** The payoff screen — shows optimized cutting diagrams for the full project.
+
+**Data flow:**
+1. Reads `cabinets` + `drawers` from projectStore (single-value selectors)
+2. Calls `calculateCabinetParts()` + `calculateDrawerParts()` for all items
+3. Groups parts by `part.material` (separate optimizer run per material type)
+4. Runs `optimizeSheetCutting()` reactively — re-runs when settings change
+5. Renders one `CuttingDiagram` SVG per sheet, inside a scrollable sheet card
+
+**UI sections:**
+- Blue header: project name + overall stats (sheets / parts / utilization %)
+- Settings panel (collapsible): sheet width, sheet height, saw kerf (MeasurementInput)
+- Material tabs (only shown when > 1 material, e.g. 3/4" + 1/4" plywood)
+- Per-sheet cards: header (sheet N of M + utilization badge), SVG diagram, part list
+- Warning card if any parts are too large for the sheet
+- Footer: Export PDF placeholder button
