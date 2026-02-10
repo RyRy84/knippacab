@@ -46,6 +46,33 @@ KnippaCab/
 5. **Sheet goods optimizer is the killer feature** — 2D bin packing with grain direction constraints
 6. **Default joinery: Pocket screws** — beginner-friendly, user can override per cabinet
 
+## ⚠️ Known Web Gotchas (Read Before Writing Any Screen)
+
+### Zustand selector must return a stable reference — NEVER an object literal
+
+**WRONG — causes "Maximum update depth exceeded" crash on web:**
+```typescript
+// This creates a new {} on every render. React 18's useSyncExternalStore
+// sees it as always-changed and enters an infinite re-render loop.
+const { currentProject, cabinets } = useProjectStore(s => ({
+  currentProject: s.currentProject,
+  cabinets: s.cabinets,
+}));
+```
+
+**CORRECT — one call per value, each returns a stable direct reference:**
+```typescript
+const currentProject = useProjectStore(s => s.currentProject);
+const cabinets       = useProjectStore(s => s.cabinets);
+const deleteCabinet  = useProjectStore(s => s.deleteCabinet);
+```
+
+This is a React 18 + Zustand v4 compatibility issue on web/concurrent mode. On native it is silent; on web it crashes immediately with a blank screen. Every screen must use the single-value selector pattern.
+
+### navigation.replace() can cause a blank screen on web
+
+Use `navigation.navigate()` instead of `navigation.replace()` when transitioning between screens after a state update. `replace` has a timing issue with Zustand's `set()` on web that leaves the new screen blank. If you need to prevent back-navigation to a form screen, restructure the navigation stack with `navigation.reset()` instead.
+
 ## Construction Standards Reference
 
 ### Standard Reveals (Frameless)
