@@ -34,7 +34,7 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 import { useProjectStore } from '../store/projectStore';
 import { DrawerCornerJoinery, DrawerBottomMethod } from '../types';
-import { inchesToMm, mmToInches } from '../utils/unitConversion';
+import { inchesToMm, mmToInches, formatForDisplay } from '../utils/unitConversion';
 import {
   DRAWER_SLIDE_CLEARANCE_EACH_SIDE_MM,
   DRAWER_TOP_CLEARANCE_MM,
@@ -128,8 +128,11 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
   const { cabinetId } = route.params;
 
   // Single-value Zustand selectors (see CLAUDE.md web gotcha)
-  const cabinets  = useProjectStore(s => s.cabinets);
-  const addDrawer = useProjectStore(s => s.addDrawer);
+  const cabinets       = useProjectStore(s => s.cabinets);
+  const addDrawer      = useProjectStore(s => s.addDrawer);
+  const currentProject = useProjectStore(s => s.currentProject);
+
+  const units = currentProject?.units ?? 'imperial';
 
   const cabinet = cabinets.find(c => c.id === cabinetId) ?? null;
 
@@ -217,7 +220,7 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
     if (totalUsedIn > availableIn + 0.01) {
       Alert.alert(
         'Heights Exceed Cabinet',
-        `Total drawer height (${totalUsedIn.toFixed(2)}") exceeds cabinet height (${availableIn.toFixed(2)}").` +
+        `Total drawer height (${formatForDisplay(inchesToMm(totalUsedIn), units)}) exceeds cabinet height (${formatForDisplay(cabinet.height, units)}).` +
         ' Reduce individual heights or the number of drawers.'
       );
       return;
@@ -273,13 +276,13 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
           {cabinet.type.charAt(0).toUpperCase() + cabinet.type.slice(1)} Cabinet
           {'  '}
           <Text style={styles.contextDim}>
-            {mmToInches(cabinet.width).toFixed(1)}" W
+            {formatForDisplay(cabinet.width, units)} W
             {' × '}
-            {mmToInches(cabinet.height).toFixed(1)}" H
+            {formatForDisplay(cabinet.height, units)} H
           </Text>
         </Text>
         <Text style={styles.contextAvailable}>
-          Available height: {availableIn.toFixed(2)}"
+          Available height: {formatForDisplay(cabinet.height, units)}
         </Text>
       </View>
 
@@ -340,11 +343,11 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
       {/* ── Height usage summary ─────────────────────────────────────────── */}
       <View style={[styles.summaryBar, isOverHeight && styles.summaryBarError]}>
         <Text style={[styles.summaryText, isOverHeight && styles.summaryTextError]}>
-          Used: {totalUsedIn.toFixed(2)}"
-          {'  '}
-          Available: {availableIn.toFixed(2)}"
-          {'  '}
-          Remaining: {remainingIn.toFixed(2)}"
+          {'Used: '}{formatForDisplay(inchesToMm(totalUsedIn), units)}
+          {'  ·  '}
+          {'Available: '}{formatForDisplay(cabinet.height, units)}
+          {'  ·  '}
+          {'Remaining: '}{isOverHeight ? '−' : ''}{formatForDisplay(inchesToMm(Math.abs(remainingIn)), units)}
         </Text>
         {isOverHeight && (
           <Text style={styles.summaryErrorNote}>
