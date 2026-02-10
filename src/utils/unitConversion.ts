@@ -454,6 +454,129 @@ export function formatMm(mm: number): string {
 // CONVENIENCE — Format mm in the user's preferred unit system
 // =============================================================================
 
+// =============================================================================
+// USER INPUT PARSING — Convert typed strings into mm
+// =============================================================================
+
+/**
+ * Parse an imperial measurement string typed by the user into decimal inches.
+ *
+ * C# comparison: This is like a TryParse pattern — returns null instead of
+ * throwing when the input is unrecognized, so the caller can show a friendly
+ * error rather than catching an exception.
+ *
+ * Accepted formats (all of these parse correctly):
+ *   "36"           → 36 in      (plain whole number)
+ *   "36.5"         → 36.5 in    (decimal)
+ *   "36""          → 36 in      (trailing inch symbol — ignored)
+ *   "36 1/2"       → 36.5 in    (whole + fraction, space separator)
+ *   "36 1/2""      → 36.5 in    (with inch symbol)
+ *   "36-1/2"       → 36.5 in    (whole + fraction, dash separator)
+ *   "1/2"          → 0.5 in     (fraction only, no whole number)
+ *   "3'"           → 36 in      (feet only)
+ *   "3'6"          → 42 in      (feet + inches, no separator)
+ *   "3' 6"         → 42 in      (feet + inches, space separator)
+ *   "3'-6"         → 42 in      (feet + inches, dash separator)
+ *   "3' 6 1/2"     → 42.5 in    (feet + inches + fraction)
+ *   "3'-6-1/2"     → 42.5 in    (feet + inches + fraction, dashes)
+ *   "3' 6 1/2""    → 42.5 in    (with inch symbol)
+ *
+ * @param text - The raw string the user typed
+ * @returns Decimal inches, or null if the format is unrecognized
+ */
+export function parseImperialInput(text: string): number | null {
+  // Strip all inch symbols (", ", ") and trim whitespace
+  let s = text.trim().replace(/["""]+/g, '').trim();
+  if (!s) return null;
+
+  // ── FEET COMPONENT ──────────────────────────────────────────────────────────
+  // Search for an apostrophe (also handles curly apostrophe ' and ʼ)
+  const apostropheIdx = s.search(/[''']/);
+  let totalInches = 0;
+  let restStr = s;
+
+  if (apostropheIdx !== -1) {
+    const feetStr = s.slice(0, apostropheIdx).trim();
+    const feet = parseFloat(feetStr);
+    if (isNaN(feet) || feet < 0) return null;
+
+    totalInches = feet * INCHES_PER_FOOT;
+
+    // Strip the apostrophe and any leading dashes/spaces from what follows
+    // "3'-6 1/2"  →  after apostrophe: "-6 1/2"  →  strip leading "- "  →  "6 1/2"
+    restStr = s.slice(apostropheIdx + 1).replace(/^[\s\-]+/, '').trim();
+  }
+
+  // ── INCHES + OPTIONAL FRACTION ──────────────────────────────────────────────
+  if (!restStr) return totalInches; // Feet-only input (e.g. "3'")
+
+  // Case 1: fraction only — "1/2", "3/16", "7/8"
+  const fractionOnlyMatch = restStr.match(/^(\d+)\s*\/\s*(\d+)$/);
+  if (fractionOnlyMatch) {
+    const num = parseInt(fractionOnlyMatch[1], 10);
+    const den = parseInt(fractionOnlyMatch[2], 10);
+    if (den === 0) return null;
+    return totalInches + num / den;
+  }
+
+  // Case 2: whole number + fraction — "36 1/2", "36-1/2", "6 3/16"
+  // Separator is one or more spaces and/or a dash.
+  const wholeAndFracMatch = restStr.match(/^(\d+(?:\.\d+)?)\s*[\s\-]\s*(\d+)\s*\/\s*(\d+)$/);
+  if (wholeAndFracMatch) {
+    const whole = parseFloat(wholeAndFracMatch[1]);
+    const num   = parseInt(wholeAndFracMatch[2], 10);
+    const den   = parseInt(wholeAndFracMatch[3], 10);
+    if (isNaN(whole) || den === 0) return null;
+    return totalInches + whole + num / den;
+  }
+
+  // Case 3: plain decimal or whole number — "36", "36.5", "6"
+  const plain = parseFloat(restStr);
+  if (!isNaN(plain) && plain >= 0) return totalInches + plain;
+
+  return null; // Unrecognized format
+}
+
+/**
+ * Parse a metric measurement string typed by the user into millimeters.
+ *
+ * Accepts plain numbers with an optional "mm" suffix:
+ *   "914"      → 914 mm
+ *   "914.4"    → 914.4 mm
+ *   "914 mm"   → 914 mm
+ *
+ * @param text - The raw string the user typed
+ * @returns Millimeters, or null if the input is empty or not a number
+ */
+export function parseMetricInput(text: string): number | null {
+  // Remove optional "mm" suffix (case-insensitive), then parse
+  const s = text.trim().replace(/\s*mm\s*$/i, '').trim();
+  if (!s) return null;
+  const mm = parseFloat(s);
+  return isNaN(mm) || mm < 0 ? null : mm;
+}
+
+/**
+ * Parse a user-typed measurement string into millimeters, using the active
+ * unit system to decide which parser to apply.
+ *
+ * This is the single function called by the MeasurementInput component on
+ * every keystroke and on blur. Returning null means "not yet a valid number"
+ * — the component uses null to show an inline validation error.
+ *
+ * @param text  - The raw string from the TextInput
+ * @param units - "imperial" or "metric"
+ * @returns Millimeters (exact internal value), or null if unparseable
+ */
+export function parseMeasurementInput(text: string, units: UnitSystem): number | null {
+  if (units === 'imperial') {
+    const inches = parseImperialInput(text);
+    if (inches === null) return null;
+    return inchesToMm(inches);
+  }
+  return parseMetricInput(text);
+}
+
 /**
  * Format a mm value for display in whatever unit system the user has selected.
  * This is the main function you'll call from UI components.

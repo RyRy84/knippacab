@@ -487,7 +487,75 @@ Each part row shows: name, material, notes (left) and W×H, thickness, grain dir
 
 ---
 
-### `src/__tests__/` — Unit Test Suites (93 tests, all passing)
+### `src/components/MeasurementInput.tsx` — Reusable Measurement Input (NEW)
+
+**Purpose:** The primary user-facing input widget for all dimension fields. Handles both Imperial (fractional inches / feet-inches) and Metric (mm) input with live parsing and canonical re-formatting on blur.
+
+**Props:**
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `label` | `string` | ✓ | Section label above input (all-caps by convention) |
+| `valueInMm` | `number \| null` | ✓ | Current value in mm from parent state |
+| `onChangeValue` | `(mm: number \| null) => void` | ✓ | Called with parsed mm on each valid keystroke |
+| `units` | `UnitSystem` | ✓ | `"imperial"` or `"metric"` — drives parser and display |
+| `minMm` | `number` | - | Min value in mm; shown as error on blur if violated |
+| `maxMm` | `number` | - | Max value in mm |
+| `placeholder` | `string` | - | Defaults to unit-appropriate example text |
+| `hint` | `string` | - | Helper text shown below input (hidden when error is shown) |
+| `error` | `string` | - | External error from form-level validation |
+| `containerStyle` | `ViewStyle` | - | Override outer container style (e.g. for spacing) |
+
+**UX behaviour:**
+- While typing: raw text is shown. Valid parses call `onChangeValue` immediately.
+- On blur: input is validated (parse + min/max) and re-formatted to canonical form (e.g. `36.5` → `36 1/2"`).
+- When `valueInMm` changes from outside (e.g. AutoBalance in DrawerBuilderScreen): display updates if field is not focused.
+- `keyboardType`: `"default"` for Imperial (needs `'`, `/`), `"decimal-pad"` for Metric.
+
+**Usage pattern:**
+```typescript
+const [widthMm, setWidthMm] = useState<number | null>(null);
+
+<MeasurementInput
+  label="WIDTH"
+  valueInMm={widthMm}
+  onChangeValue={setWidthMm}
+  units={units}
+  minMm={inchesToMm(3)}
+  hint='Standard: 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 42, 48"'
+  containerStyle={{ marginTop: 20 }}
+/>
+```
+
+---
+
+### `src/utils/unitConversion.ts` — Updated with Measurement Parsers
+
+Three new functions added for the MeasurementInput component:
+
+| Function | Signature | Description |
+|----------|-----------|-------------|
+| `parseImperialInput` | `(text: string) → number \| null` | Parses any imperial format → decimal inches |
+| `parseMetricInput` | `(text: string) → number \| null` | Parses `"914"` / `"914.4"` / `"914 mm"` → mm |
+| `parseMeasurementInput` | `(text, units) → number \| null` | Orchestrator — dispatches to imperial or metric parser |
+
+**Imperial formats handled by `parseImperialInput`:**
+
+| Input | Result |
+|-------|--------|
+| `"36"` | 36 in |
+| `"36.5"` | 36.5 in |
+| `"36 1/2"` | 36.5 in |
+| `"36-1/2"` | 36.5 in |
+| `"3/16"` | 0.1875 in |
+| `"3'"` | 36 in |
+| `"3'6"` | 42 in |
+| `"3' 6 1/2"` | 42.5 in |
+| `"3'-6-3/16"` | 42.1875 in |
+
+---
+
+### `src/__tests__/` — Unit Test Suites (139 tests, all passing)
 
 | File | Describes | Tests |
 |------|-----------|-------|
@@ -495,6 +563,6 @@ Each part row shows: name, material, notes (left) and W×H, thickness, grain dir
 | `drawerCalculator.test.ts` | Part counts, side dims, front/back, bottom (all joinery methods), drawer face | 22 |
 | `revealCalculator.test.ts` | Single door, double doors, drawer face, stacked drawers | 12 |
 | `grainLogic.test.ts` | assignGrainDirection (all part types incl. doors/faces), canRotatePart, end-to-end | 19 |
-| `unitConversion.test.ts` | All conversion functions, fractional display, edge cases | 19 |
+| `unitConversion.test.ts` | parseImperialInput (all formats), parseMetricInput, parseMeasurementInput, core conversions | 46 |
 
 Run with: `npm test`

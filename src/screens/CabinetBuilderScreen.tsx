@@ -24,6 +24,7 @@ import { RootStackParamList } from '../navigation/types';
 import { useProjectStore } from '../store/projectStore';
 import { CabinetType, JoineryMethod, ToeKickOption } from '../types';
 import { inchesToMm } from '../utils/unitConversion';
+import MeasurementInput from '../components/MeasurementInput';
 import {
   BASE_CABINET_HEIGHT_MM, BASE_CABINET_DEPTH_MM,
   WALL_CABINET_HEIGHT_MM, WALL_CABINET_DEPTH_MM,
@@ -81,13 +82,20 @@ export default function CabinetBuilderScreen({ navigation }: Props) {
   const currentProject = useProjectStore(s => s.currentProject);
   const addCabinet     = useProjectStore(s => s.addCabinet);
 
+  // Derive units from the current project (imperial is the default)
+  const units = currentProject?.units ?? 'imperial';
+
   const [cabinetType, setCabinetType] = useState<CabinetType>('base');
-  const [widthIn, setWidthIn]         = useState('');              // user types inches
+  // Width is now stored in mm — MeasurementInput handles all parsing/formatting
+  const [widthMm, setWidthMm]         = useState<number | null>(null);
   const [joineryMethod, setJoineryMethod] = useState<JoineryMethod>(
     currentProject?.defaultJoinery ?? 'pocket_hole'
   );
   const [toeKickOption, setToeKickOption] = useState<ToeKickOption>('standard');
-  const [customToeKickIn, setCustomToeKickIn] = useState('4');    // inches
+  // Custom toe kick is also mm now — separate MeasurementInput
+  const [customToeKickMm, setCustomToeKickMm] = useState<number | null>(
+    STANDARD_TOE_KICK_HEIGHT_MM  // default to 4" (102mm)
+  );
 
   function handleAdd() {
     if (!currentProject) {
@@ -96,9 +104,8 @@ export default function CabinetBuilderScreen({ navigation }: Props) {
       return;
     }
 
-    const widthParsed = parseFloat(widthIn);
-    if (!widthIn || isNaN(widthParsed) || widthParsed <= 0) {
-      Alert.alert('Width Required', 'Please enter a cabinet width in inches.');
+    if (widthMm === null || widthMm <= 0) {
+      Alert.alert('Width Required', 'Please enter a valid cabinet width.');
       return;
     }
 
@@ -108,13 +115,12 @@ export default function CabinetBuilderScreen({ navigation }: Props) {
     if (toeKickOption === 'standard') {
       toeKickHeightMm = STANDARD_TOE_KICK_HEIGHT_MM;
     } else if (toeKickOption === 'custom') {
-      const custom = parseFloat(customToeKickIn);
-      toeKickHeightMm = isNaN(custom) ? STANDARD_TOE_KICK_HEIGHT_MM : inchesToMm(custom);
+      toeKickHeightMm = customToeKickMm ?? STANDARD_TOE_KICK_HEIGHT_MM;
     }
 
     addCabinet({
       type: cabinetType,
-      width: inchesToMm(widthParsed),
+      width: widthMm,           // Already in mm — no conversion needed
       height: defaults.heightMm,
       depth: defaults.depthMm,
       toeKickOption,
@@ -157,19 +163,19 @@ export default function CabinetBuilderScreen({ navigation }: Props) {
       <Text style={styles.typeDesc}>{defaults.description}</Text>
 
       {/* ── Width ───────────────────────────────────────────────────────── */}
-      <Text style={styles.sectionLabel}>WIDTH (inches)</Text>
-      <TextInput
-        style={styles.textInput}
-        placeholder="e.g. 36"
-        placeholderTextColor="#BDBDBD"
-        value={widthIn}
-        onChangeText={setWidthIn}
-        keyboardType="decimal-pad"
-        returnKeyType="done"
+      <MeasurementInput
+        label="WIDTH"
+        valueInMm={widthMm}
+        onChangeValue={setWidthMm}
+        units={units}
+        minMm={inchesToMm(3)}
+        hint={
+          units === 'imperial'
+            ? 'Standard sizes: 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 42, 48"'
+            : 'Standard sizes: 229, 305, 381, 457, 533, 610, 686, 762, 838, 914 mm'
+        }
+        containerStyle={styles.measurementInputSpacing}
       />
-      <Text style={styles.inputHint}>
-        Standard sizes: 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 42, 48
-      </Text>
 
       {/* ── Defaults Info ───────────────────────────────────────────────── */}
       <View style={styles.defaultsCard}>
@@ -197,17 +203,16 @@ export default function CabinetBuilderScreen({ navigation }: Props) {
             ))}
           </View>
           {toeKickOption === 'custom' && (
-            <>
-              <Text style={styles.inputHint}>Custom height (inches):</Text>
-              <TextInput
-                style={[styles.textInput, styles.textInputSmall]}
-                value={customToeKickIn}
-                onChangeText={setCustomToeKickIn}
-                keyboardType="decimal-pad"
-                returnKeyType="done"
-                placeholder="4"
-              />
-            </>
+            <MeasurementInput
+              label="CUSTOM TOE KICK HEIGHT"
+              valueInMm={customToeKickMm}
+              onChangeValue={setCustomToeKickMm}
+              units={units}
+              minMm={inchesToMm(1)}
+              maxMm={inchesToMm(12)}
+              hint={units === 'imperial' ? 'Standard is 4"' : 'Standard is 102 mm'}
+              containerStyle={styles.measurementInputSpacing}
+            />
           )}
         </>
       )}
@@ -296,25 +301,9 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
 
-  // Text input
-  textInput: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#212121',
-  },
-  textInputSmall: {
-    marginTop: 6,
-    fontSize: 15,
-  },
-  inputHint: {
-    fontSize: 11,
-    color: '#9E9E9E',
-    marginTop: 5,
+  // Spacing wrapper for MeasurementInput instances
+  measurementInputSpacing: {
+    marginTop: 20,
   },
 
   // Defaults info card

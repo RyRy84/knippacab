@@ -24,9 +24,9 @@
  * See CLAUDE.md "Known Web Gotchas".
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
+  View, Text, TouchableOpacity,
   ScrollView, StyleSheet, Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -34,7 +34,8 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 import { useProjectStore } from '../store/projectStore';
 import { DrawerCornerJoinery, DrawerBottomMethod } from '../types';
-import { inchesToMm, mmToInches, formatForDisplay } from '../utils/unitConversion';
+import { inchesToMm, formatForDisplay } from '../utils/unitConversion';
+import MeasurementInput from '../components/MeasurementInput';
 import {
   DRAWER_SLIDE_CLEARANCE_EACH_SIDE_MM,
   DRAWER_TOP_CLEARANCE_MM,
@@ -100,24 +101,19 @@ const BOTTOM_METHOD_OPTIONS: { value: DrawerBottomMethod; label: string; descrip
 // =============================================================================
 
 /**
- * Given a cabinet height (in mm) and a drawer count, return an array of
- * equal height strings in decimal inches, each rounded to 2 decimal places.
+ * Distribute a cabinet's height equally across N drawers.
+ * Returns an array of mm values (one per drawer).
  */
-function distributeHeightsEvenly(cabinetHeightMm: number, count: number): string[] {
-  const totalIn = mmToInches(cabinetHeightMm);
-  const each = totalIn / count;
-  return Array.from({ length: count }, () => each.toFixed(2));
+function distributeHeightsMmEvenly(cabinetHeightMm: number, count: number): number[] {
+  const each = cabinetHeightMm / count;
+  return Array.from({ length: count }, () => each);
 }
 
 /**
- * Parse a string array of inch values and return the total in inches.
- * Invalid / empty entries count as 0.
+ * Sum an array of mm heights. Null entries (not yet entered) count as 0.
  */
-function sumHeightsIn(heights: string[]): number {
-  return heights.reduce((sum, h) => {
-    const v = parseFloat(h);
-    return sum + (isNaN(v) ? 0 : v);
-  }, 0);
+function sumHeightsMm(heights: (number | null)[]): number {
+  return heights.reduce<number>((sum, h) => sum + (h ?? 0), 0);
 }
 
 // =============================================================================
@@ -137,40 +133,34 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
   const cabinet = cabinets.find(c => c.id === cabinetId) ?? null;
 
   // ── Form state ─────────────────────────────────────────────────────────────
-  const [drawerCount, setDrawerCount]           = useState(1);
-  const [heightsIn, setHeightsIn]               = useState<string[]>(['6.00']);
-  const [autoBalance, setAutoBalance]           = useState(false);
-  const [cornerJoinery, setCornerJoinery]       = useState<DrawerCornerJoinery>('pocket_hole');
-  const [bottomMethod, setBottomMethod]         = useState<DrawerBottomMethod>('applied');
+  const [drawerCount, setDrawerCount]     = useState(1);
+  // Heights stored in mm (null = user hasn't typed a value yet)
+  const [heightsMm, setHeightsMm]         = useState<(number | null)[]>([null]);
+  const [autoBalance, setAutoBalance]     = useState(false);
+  const [cornerJoinery, setCornerJoinery] = useState<DrawerCornerJoinery>('pocket_hole');
+  const [bottomMethod, setBottomMethod]   = useState<DrawerBottomMethod>('applied');
 
-  // Available height in inches (the full cabinet box height — drawer faces
-  // cover the openings, so we use the full cabinet height as the design space).
-  const availableIn = cabinet ? parseFloat(mmToInches(cabinet.height).toFixed(2)) : 0;
-
-  // ── Sync heights array when count changes ──────────────────────────────────
-  // When the user changes drawer count:
-  //   - Truncate the array if count decreased
-  //   - Append a default height if count increased
-  //   - If autoBalance is on, redistribute evenly
-  const syncHeightsToCount = useCallback((newCount: number, balance: boolean, cabHeightMm: number) => {
-    if (balance && cabHeightMm > 0) {
-      setHeightsIn(distributeHeightsEvenly(cabHeightMm, newCount));
-      return;
-    }
-    setHeightsIn(prev => {
-      if (newCount <= prev.length) return prev.slice(0, newCount);
-      const defaultH = (availableIn / newCount).toFixed(2);
-      return [...prev, ...Array.from({ length: newCount - prev.length }, () => defaultH)];
-    });
-  }, [availableIn]);
-
-  // Run on mount to set a sensible initial height suggestion
+  // ── Sync heights when count changes or on first mount ──────────────────────
+  // Sets a sensible initial distribution when the cabinet is loaded
   useEffect(() => {
     if (cabinet) {
-      setHeightsIn(distributeHeightsEvenly(cabinet.height, 1));
+      setHeightsMm(distributeHeightsMmEvenly(cabinet.height, 1));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cabinetId]);
+
+  function syncHeightsToCount(newCount: number, balance: boolean, cabHeightMm: number) {
+    if (balance && cabHeightMm > 0) {
+      setHeightsMm(distributeHeightsMmEvenly(cabHeightMm, newCount));
+      return;
+    }
+    setHeightsMm(prev => {
+      if (newCount <= prev.length) return prev.slice(0, newCount);
+      // Default new slots to an equal share of available height
+      const defaultMm = cabHeightMm > 0 ? cabHeightMm / newCount : null;
+      return [...prev, ...Array.from({ length: newCount - prev.length }, () => defaultMm)];
+    });
+  }
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -184,14 +174,14 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
     const next = !autoBalance;
     setAutoBalance(next);
     if (next && cabinet) {
-      setHeightsIn(distributeHeightsEvenly(cabinet.height, drawerCount));
+      setHeightsMm(distributeHeightsMmEvenly(cabinet.height, drawerCount));
     }
   }
 
-  function handleHeightChange(index: number, value: string) {
-    setHeightsIn(prev => {
+  function handleHeightChange(index: number, mm: number | null) {
+    setHeightsMm(prev => {
       const next = [...prev];
-      next[index] = value;
+      next[index] = mm;
       return next;
     });
     // Typing a custom height turns off auto-balance
@@ -204,23 +194,25 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
       return;
     }
 
-    // Validate all heights
+    // Minimum drawer height: 3 inches
+    const minHeightMm = inchesToMm(MIN_DRAWER_HEIGHT_IN);
+
     for (let i = 0; i < drawerCount; i++) {
-      const h = parseFloat(heightsIn[i] ?? '0');
-      if (isNaN(h) || h < MIN_DRAWER_HEIGHT_IN) {
+      const h = heightsMm[i];
+      if (h === null || h < minHeightMm) {
         Alert.alert(
           'Invalid Height',
-          `Drawer ${i + 1} height must be at least ${MIN_DRAWER_HEIGHT_IN} inches.`
+          `Drawer ${i + 1} height must be at least ${MIN_DRAWER_HEIGHT_IN}".`
         );
         return;
       }
     }
 
-    const totalUsedIn = sumHeightsIn(heightsIn.slice(0, drawerCount));
-    if (totalUsedIn > availableIn + 0.01) {
+    const totalUsedMm = sumHeightsMm(heightsMm.slice(0, drawerCount));
+    if (totalUsedMm > cabinet.height + 0.5) { // 0.5mm tolerance
       Alert.alert(
         'Heights Exceed Cabinet',
-        `Total drawer height (${formatForDisplay(inchesToMm(totalUsedIn), units)}) exceeds cabinet height (${formatForDisplay(cabinet.height, units)}).` +
+        `Total drawer height (${formatForDisplay(totalUsedMm, units)}) exceeds cabinet height (${formatForDisplay(cabinet.height, units)}).` +
         ' Reduce individual heights or the number of drawers.'
       );
       return;
@@ -228,7 +220,7 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
 
     // Save each drawer to the store
     for (let i = 0; i < drawerCount; i++) {
-      const openingHeightMm = inchesToMm(parseFloat(heightsIn[i]));
+      const openingHeightMm = heightsMm[i]!;
       addDrawer(cabinetId, {
         // Subtract clearances so the box fits inside the opening
         width:  cabinet.width  - (2 * DRAWER_SLIDE_CLEARANCE_EACH_SIDE_MM),
@@ -243,9 +235,9 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
   }
 
   // ── Derived display values ─────────────────────────────────────────────────
-  const totalUsedIn = sumHeightsIn(heightsIn.slice(0, drawerCount));
-  const remainingIn = availableIn - totalUsedIn;
-  const isOverHeight = remainingIn < -0.01;
+  const totalUsedMm  = sumHeightsMm(heightsMm.slice(0, drawerCount));
+  const remainingMm  = (cabinet?.height ?? 0) - totalUsedMm;
+  const isOverHeight = remainingMm < -0.5; // 0.5mm tolerance
 
   // ==========================================================================
   // RENDER
@@ -313,7 +305,9 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
 
       {/* ── Drawer heights ──────────────────────────────────────────────── */}
       <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionLabel}>DRAWER HEIGHTS (inches)</Text>
+        <Text style={styles.sectionLabel}>
+          DRAWER HEIGHTS {units === 'imperial' ? '(in)' : '(mm)'}
+        </Text>
         <TouchableOpacity
           style={[styles.autoBalanceBtn, autoBalance && styles.autoBalanceBtnActive]}
           onPress={handleAutoBalanceToggle}
@@ -325,29 +319,25 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
       </View>
 
       {Array.from({ length: drawerCount }, (_, i) => (
-        <View key={i} style={styles.heightRow}>
-          <Text style={styles.heightLabel}>Drawer {i + 1}</Text>
-          <TextInput
-            style={styles.heightInput}
-            value={heightsIn[i] ?? ''}
-            onChangeText={v => handleHeightChange(i, v)}
-            keyboardType="decimal-pad"
-            returnKeyType="done"
-            placeholder="0.00"
-            placeholderTextColor="#BDBDBD"
-          />
-          <Text style={styles.heightUnit}>"</Text>
-        </View>
+        <MeasurementInput
+          key={i}
+          label={`Drawer ${i + 1}`}
+          valueInMm={heightsMm[i] ?? null}
+          onChangeValue={mm => handleHeightChange(i, mm)}
+          units={units}
+          minMm={inchesToMm(MIN_DRAWER_HEIGHT_IN)}
+          containerStyle={styles.drawerHeightInput}
+        />
       ))}
 
       {/* ── Height usage summary ─────────────────────────────────────────── */}
       <View style={[styles.summaryBar, isOverHeight && styles.summaryBarError]}>
         <Text style={[styles.summaryText, isOverHeight && styles.summaryTextError]}>
-          {'Used: '}{formatForDisplay(inchesToMm(totalUsedIn), units)}
+          {'Used: '}{formatForDisplay(totalUsedMm, units)}
           {'  ·  '}
           {'Available: '}{formatForDisplay(cabinet.height, units)}
           {'  ·  '}
-          {'Remaining: '}{isOverHeight ? '−' : ''}{formatForDisplay(inchesToMm(Math.abs(remainingIn)), units)}
+          {'Remaining: '}{isOverHeight ? '−' : ''}{formatForDisplay(Math.abs(remainingMm), units)}
         </Text>
         {isOverHeight && (
           <Text style={styles.summaryErrorNote}>
@@ -565,35 +555,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 
-  // Drawer height input rows
-  heightRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 10,
-  },
-  heightLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#424242',
-    width: 64,
-  },
-  heightInput: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: '#212121',
-  },
-  heightUnit: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#424242',
-    width: 14,
+  // Spacing between stacked drawer height MeasurementInputs
+  drawerHeightInput: {
+    marginBottom: 10,
   },
 
   // Height summary bar
