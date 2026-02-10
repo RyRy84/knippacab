@@ -13,4 +13,5 @@ export type RootStackParamList = {
   ReviewEdit: undefined;
   CuttingPlan: undefined;
   VisualDiagram: undefined;
+  CalculatorDemo: undefined;
 };

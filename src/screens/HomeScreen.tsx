@@ -17,12 +17,21 @@ type HomeScreenProps = {
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Home Screen</Text>
-      <Text style={styles.subtitle}>Welcome to KnippaCab</Text>
-      <Button
-        title="Create New Project"
-        onPress={() => navigation.navigate('ProjectSetup')}
-      />
+      <Text style={styles.title}>KnippaCab</Text>
+      <Text style={styles.subtitle}>Cabinet Design & Cut List Generator</Text>
+      <View style={styles.buttonRow}>
+        <Button
+          title="Create New Project"
+          onPress={() => navigation.navigate('ProjectSetup')}
+        />
+      </View>
+      <View style={styles.buttonRow}>
+        <Button
+          title="Calculator Demo"
+          onPress={() => navigation.navigate('CalculatorDemo')}
+          color="#4CAF50"
+        />
+      </View>
     </View>
   );
 }
@@ -36,13 +45,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 8,
+    color: '#1565C0',
   },
   subtitle: {
-    fontSize: 16,
-    marginBottom: 20,
+    fontSize: 15,
+    marginBottom: 32,
     color: '#666',
+    textAlign: 'center',
+  },
+  buttonRow: {
+    width: '100%',
+    marginBottom: 12,
   },
 });

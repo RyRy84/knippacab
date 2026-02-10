@@ -22,6 +22,7 @@ import DrawerBuilderScreen from '../screens/DrawerBuilderScreen';
 import ReviewEditScreen from '../screens/ReviewEditScreen';
 import CuttingPlanScreen from '../screens/CuttingPlanScreen';
 import VisualDiagramScreen from '../screens/VisualDiagramScreen';
+import CalculatorDemoScreen from '../screens/CalculatorDemoScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -74,6 +75,11 @@ export default function AppNavigator() {
           name="VisualDiagram"
           component={VisualDiagramScreen}
           options={{ title: 'Visual Diagram' }}
+        />
+        <Stack.Screen
+          name="CalculatorDemo"
+          component={CalculatorDemoScreen}
+          options={{ title: 'Calculator Demo' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
