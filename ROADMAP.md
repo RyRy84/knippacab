@@ -47,12 +47,14 @@ Build a cross-platform cabinet design app that **eliminates calculation errors**
 - ✅ CabinetBuilderScreen — type selector, width input, toe kick, joinery
 - ✅ ReviewEditScreen — cabinet list with cards, delete, Add/Generate buttons
 
+- ✅ CuttingPlanScreen — functional cut list screen (parts grouped by material, grain direction badges, export placeholder)
+
 **What We Have:**
-A fully working end-to-end workflow: create project → add cabinets → review list.
+A complete end-to-end workflow: create project → add cabinets → review list → view cut list.
 The calculation engine is fully validated with 93 unit tests. Web version runs cleanly.
 
-**Git Commits:** 13 total
-**Lines of Code:** ~5,000+
+**Git Commits:** 14 total
+**Lines of Code:** ~5,500+
 **Can Run?** Yes (`npx expo start --web`)
 
 ---
@@ -435,10 +437,10 @@ getOptimalOrientation(part: Part): 'horizontal' | 'vertical'
    - "Share" (uses native share sheet)
 
 **Success Criteria:**
-- [ ] Parts calculated from all cabinets
-- [ ] Grouped logically
-- [ ] Dimensions shown in correct units
-- [ ] Grain indicators clear
+- [x] Parts calculated from all cabinets
+- [x] Grouped logically
+- [x] Dimensions shown in correct units
+- [x] Grain indicators clear
 
 ---
 

@@ -863,7 +863,7 @@ export const FEATURE_FLAGS = {
 
 ## Current Status
 
-**Last Updated:** 2026-02-08
+**Last Updated:** 2026-02-10
 
 **Completed:**
 - ✅ Project scaffolding (Expo + dependencies)
@@ -873,23 +873,31 @@ export const FEATURE_FLAGS = {
 - ✅ Cabinet constants (src/constants/cabinetDefaults.ts)
 - ✅ Navigation setup + placeholder screens
 - ✅ **Sheet Optimizer Research** (comprehensive competitive analysis - see SHEET_OPTIMIZER_RESEARCH.md)
+- ✅ Cabinet calculator (src/utils/cabinetCalculator.ts)
+- ✅ Drawer calculator (src/utils/drawerCalculator.ts)
+- ✅ Reveal calculator (src/utils/revealCalculator.ts)
+- ✅ Grain direction logic (src/utils/grainLogic.ts)
+- ✅ SQLite database layer (schema, migrations, CRUD, web stubs)
+- ✅ Zustand stores (projectStore, settingsStore, uiStore)
+- ✅ Unit tests — 93 tests passing
+- ✅ ProjectSetupScreen — functional form
+- ✅ CabinetBuilderScreen — type/dimensions/joinery/toe kick
+- ✅ ReviewEditScreen — cabinet list, delete, navigation hub
+- ✅ CalculatorDemoScreen — calculation engine visual demo
+- ✅ **CuttingPlanScreen** — cut list grouped by material with grain direction badges
 
-**Current Phase:** Phase 1 - Minimal Viable Cabinet
+**Current Phase:** Phase 3 - User Interface (In Progress)
 
-**Next Task:** Cabinet calculator module (src/utils/cabinetCalculator.ts)
+**Next Task:** Phase 3, Milestone 3.3 — DrawerBuilderScreen (add drawers to cabinets)
+  OR Phase 4 — Sheet Goods Optimizer (bin packing algorithm + SVG diagram)
 
 **Blockers:** None
 
-**Notes:** 
-- Foundation is solid. Expanded plan now covers full kitchen design workflow (multi-cabinet projects, corner solutions, 2D layout) and V2 vision (3D visualization, AR preview).
-- **NEW:** Comprehensive sheet optimizer research completed (Feb 8, 2026). See `SHEET_OPTIMIZER_RESEARCH.md` for:
-  - Analysis of 10+ competing tools (CutList Evolution, CutList Plus, SmartCut, etc.)
-  - Algorithm recommendation: Guillotine for V1 (table-saw friendly)
-  - User pain points from forums/reviews
-  - Feature priorities validated through competitive research
-  - TypeScript implementation examples
-  - This research confirms sheet optimizer is THE killer feature that justifies price point
-- Ready to build first tangible feature (cabinet calculation logic), then move to Phase 2 (optimizer) with full research backing.
+**Notes:**
+- Full end-to-end workflow now works: create project → add cabinets → review → view cut list.
+- CuttingPlanScreen groups all parts by material with colour-coded grain direction badges.
+- Drawer Builder (3.3) is the remaining Phase 3 screen. It can be done before or after Phase 4 optimizer — Ryan decides based on priority.
+- Sheet optimizer (Phase 4) is the killer feature — see SHEET_OPTIMIZER_RESEARCH.md for algorithm choice (Guillotine/FFD) and SVG diagram approach.
 
 ---
 

@@ -432,6 +432,24 @@ export type PartType =
 
 ---
 
+### `src/screens/CuttingPlanScreen.tsx` — Cut List Screen (Functional)
+
+**Purpose:** Reads all cabinets from projectStore, calls `calculateCabinetParts()` for each, collects all `Part[]` into one array, groups by material, and displays them in a ScrollView.
+
+**Layout:**
+- Green summary header: project name + "X cabinets · Y pieces total"
+- Material section headers (e.g., `3/4" Plywood` with a "N pcs" badge)
+- Part cards per section: name (left), W × H dimensions, optional joinery notes; grain direction badge (right) with coloured border/arrow — blue=vertical, green=horizontal, orange=either
+- Quantity badge (× N) when a part has quantity > 1
+- Fixed footer: "View Cutting Diagram" (→ VisualDiagram) + "Export PDF" (placeholder alert)
+
+**Key patterns:**
+- `useMemo` for the parts calculation and material-group Map (avoid recalc on every render)
+- Single-value Zustand selectors (see Known Web Gotchas above)
+- Export button shows `Alert.alert` placeholder — wires to real PDF exporter in Phase 5
+
+---
+
 ### `src/screens/CalculatorDemoScreen.tsx` — Calculation Engine Demo (Functional)
 
 **Purpose:** Visual validation screen. Runs `calculateCabinetParts()` and `calculateDrawerParts()` with hardcoded sample inputs and displays all resulting parts. Useful for confirming the calculation engine before the full UI is built.

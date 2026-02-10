@@ -609,23 +609,26 @@ After this session, Ryan will have:
 
 ## Next Session Preview
 
-After Ryan tests this version, the next logical steps are:
+**Option A is DONE ✅ — CuttingPlanScreen is now functional.**
 
-**Option A: Complete the Cut List Screen**
-- Implement `CuttingPlanScreen.tsx`
-- Show all calculated parts grouped by material
-- This completes the basic end-to-end workflow
+The end-to-end workflow is complete: create project → add cabinets → review → cut list.
 
-**Option B: Add Drawer Support**
-- Implement `DrawerBuilderScreen.tsx`
-- Wire up drawer calculator to UI
-- Let users add drawers to cabinets
+Remaining options:
 
-**Option C: Improve UX Polish**
-- Add loading indicators
-- Better error messages
-- Preset size quick-select buttons
-- Help tooltips explaining joinery methods
+**Option B: Add Drawer Support (Phase 3.3)**
+- Implement `DrawerBuilderScreen.tsx` (placeholder exists, needs real UI)
+- Wire up `calculateDrawerParts()` to the UI
+- Let users add drawers to cabinets, have those parts appear in the cut list
+
+**Option C: Sheet Goods Optimizer (Phase 4 — The Killer Feature)**
+- Build `src/utils/optimizer/binPacking.ts` — Guillotine FFD algorithm
+- Build SVG cutting diagram component
+- See `SHEET_OPTIMIZER_RESEARCH.md` for full algorithm guidance
+
+**Option D: Improve UX Polish**
+- Preset size quick-select buttons on CabinetBuilderScreen
+- Real-time dimension preview on CabinetBuilderScreen
+- Edit cabinet (pre-filled builder) from ReviewEditScreen
 
 Ryan decides based on what he wants to test next!
 
