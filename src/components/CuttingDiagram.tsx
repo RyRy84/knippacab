@@ -86,18 +86,21 @@ function fmtDim(mm: number, units: MeasurementUnit): string {
 }
 
 /**
- * Grain direction symbol for the placed orientation.
- * If a part was rotated, the effective grain direction is swapped.
+ * Shows the part's INSTALLED grain direction — what direction the grain will run
+ * when the piece is assembled into the cabinet.
+ *
+ * ↕  vertical grain   — grain runs top-to-bottom when installed (e.g. side panels)
+ * ↔  horizontal grain — grain runs left-to-right when installed (e.g. top/bottom panels)
+ *    (blank for 'either' — no grain constraint on these parts)
+ *
+ * We deliberately show the installed direction (not the cut direction) so the
+ * woodworker can cross-check the diagram: every ↕ part is correctly placed on the
+ * sheet with its long dimension horizontal, and will be installed vertically.
  */
-function grainSymbol(direction: string, rotated: boolean): string {
-  let effective = direction;
-  if (rotated) {
-    if (direction === 'vertical')   effective = 'horizontal';
-    else if (direction === 'horizontal') effective = 'vertical';
-  }
-  if (effective === 'vertical')   return '↕';
-  if (effective === 'horizontal') return '↔';
-  return '';  // 'either' — no indicator needed
+function grainSymbol(direction: string): string {
+  if (direction === 'vertical')   return '↕';
+  if (direction === 'horizontal') return '↔';
+  return '';
 }
 
 // =============================================================================
@@ -185,9 +188,12 @@ export default function CuttingDiagram({
         const lineH    = fontSize * 1.35;
 
         // Build label lines (filter empty)
-        const nameText = part.rotated ? `${part.name} ↻` : part.name;
+        // ↻ only shown for 'either' grain parts rotated by the optimizer (non-obvious choice).
+        // Vertical/horizontal grain parts are always in their required orientation — not surprising.
+        const rotatedBadge = (part.grainDirection === 'either' && part.rotated) ? ' ↻' : '';
+        const nameText = part.name + rotatedBadge;
         const dimText  = `${fmtDim(part.width, units)} × ${fmtDim(part.height, units)}`;
-        const grain    = grainSymbol(part.grainDirection, part.rotated);
+        const grain    = grainSymbol(part.grainDirection);
 
         const lines: string[] = [nameText];
         if (showDetail) lines.push(dimText);

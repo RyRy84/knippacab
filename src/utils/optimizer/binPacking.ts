@@ -20,10 +20,22 @@
  *
  * ── GRAIN DIRECTION ───────────────────────────────────────────────────────────
  *
- * Parts with grainDirection === 'either' can be rotated 90°.
- * Parts with 'vertical' or 'horizontal' grain must keep their orientation.
- * The optimizer tries both normal and rotated orientations (when allowed)
- * and picks whichever gives the better BSSF score.
+ * A plywood sheet's grain runs along its LONG axis — the 2440mm width direction
+ * (horizontal in the cutting diagram).  For a cut part to have the correct grain
+ * when installed, its grain-aligned dimension must be placed along the sheet's
+ * x-axis.
+ *
+ *   'horizontal' grain  — grain runs along Part.width  (installed left↔right)
+ *                         → place NORMAL: Part.width  along sheet x-axis
+ *   'vertical'   grain  — grain runs along Part.height (installed top↕bottom)
+ *                         → place ROTATED: Part.height along sheet x-axis
+ *   'either'     grain  — no constraint; optimizer chooses better BSSF fit
+ *
+ * This means a cabinet side (610 deep × 876 tall, vertical grain) is placed as
+ * 876mm wide × 610mm tall on the sheet — so the grain runs horizontally on the
+ * sheet and vertically in the installed cabinet.  The `rotated` flag on the
+ * resulting PlacedPart is true for all vertical-grain parts, which is correct
+ * and expected — it is NOT an exception, it is the required orientation.
  *
  * ── PERFORMANCE ───────────────────────────────────────────────────────────────
  *
@@ -91,13 +103,22 @@ export function optimizeSheetCutting(
   for (const part of parts) {
     const w = part.width;
     const h = part.height;
-    const canRotate = part.grainDirection === 'either';
+    const grain = part.grainDirection;
 
-    // A part is oversized if it cannot fit on a fresh sheet in any orientation
-    const fitsNormal  = w <= usableW && h <= usableH;
-    const fitsRotated = canRotate && h <= usableW && w <= usableH;
+    // A part is oversized if it cannot fit on a fresh sheet in its required grain orientation.
+    //   'vertical'   → must be placed h×w (height along x-axis): h ≤ usableW, w ≤ usableH
+    //   'horizontal' → must be placed w×h (width along x-axis):  w ≤ usableW, h ≤ usableH
+    //   'either'     → try both orientations
+    let canFit: boolean;
+    if (grain === 'vertical') {
+      canFit = h <= usableW && w <= usableH;
+    } else if (grain === 'horizontal') {
+      canFit = w <= usableW && h <= usableH;
+    } else {
+      canFit = (w <= usableW && h <= usableH) || (h <= usableW && w <= usableH);
+    }
 
-    if (!fitsNormal && !fitsRotated) {
+    if (!canFit) {
       for (let i = 0; i < part.quantity; i++) {
         unplacedParts.push(`${part.name} (too large for sheet)`);
       }
@@ -118,10 +139,9 @@ export function optimizeSheetCutting(
         height: h,
         thickness: part.thickness,
         material: part.material,
-        grainDirection: part.grainDirection,
+        grainDirection: grain,
         partType: part.partType,
         cabinetId: part.cabinetId,
-        canRotate,
       });
     }
   }
@@ -220,25 +240,34 @@ function tryPlace(
   let bestRotated = false;
 
   for (const rect of freeRects) {
-    // Normal orientation
-    if (part.width <= rect.width && part.height <= rect.height) {
-      // BSSF: minimize the shorter leftover side
-      const score = Math.min(rect.width - part.width, rect.height - part.height);
-      if (score < bestScore) {
-        bestScore   = score;
-        bestRect    = rect;
-        bestRotated = false;
+    if (part.grainDirection === 'vertical') {
+      // Grain runs along Part.height (installed top↕bottom).
+      // Must place Part.height along sheet x-axis → placed as (h wide × w tall), rotated=true.
+      const pw = part.height;
+      const ph = part.width;
+      if (pw <= rect.width && ph <= rect.height) {
+        const score = Math.min(rect.width - pw, rect.height - ph);
+        if (score < bestScore) { bestScore = score; bestRect = rect; bestRotated = true; }
       }
-    }
 
-    // Rotated orientation (only if allowed and different from normal)
-    if (part.canRotate && part.width !== part.height &&
-        part.height <= rect.width && part.width <= rect.height) {
-      const score = Math.min(rect.width - part.height, rect.height - part.width);
-      if (score < bestScore) {
-        bestScore   = score;
-        bestRect    = rect;
-        bestRotated = true;
+    } else if (part.grainDirection === 'horizontal') {
+      // Grain runs along Part.width (installed left↔right).
+      // Must place Part.width along sheet x-axis → placed as (w wide × h tall), rotated=false.
+      if (part.width <= rect.width && part.height <= rect.height) {
+        const score = Math.min(rect.width - part.width, rect.height - part.height);
+        if (score < bestScore) { bestScore = score; bestRect = rect; bestRotated = false; }
+      }
+
+    } else {
+      // 'either': try both orientations, pick best BSSF score.
+      if (part.width <= rect.width && part.height <= rect.height) {
+        const score = Math.min(rect.width - part.width, rect.height - part.height);
+        if (score < bestScore) { bestScore = score; bestRect = rect; bestRotated = false; }
+      }
+      if (part.width !== part.height &&
+          part.height <= rect.width && part.width <= rect.height) {
+        const score = Math.min(rect.width - part.height, rect.height - part.width);
+        if (score < bestScore) { bestScore = score; bestRect = rect; bestRotated = true; }
       }
     }
   }

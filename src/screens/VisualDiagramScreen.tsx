@@ -375,7 +375,7 @@ export default function VisualDiagramScreen({ navigation }: Props) {
                         <View style={styles.sheetPartDot} />
                         <Text style={styles.sheetPartName}>
                           {p.name}
-                          {p.rotated ? ' (rotated)' : ''}
+                          {p.grainDirection === 'either' && p.rotated ? ' (rotated)' : ''}
                         </Text>
                         <Text style={styles.sheetPartDim}>
                           {formatForDisplay(p.width, units)} × {formatForDisplay(p.height, units)}

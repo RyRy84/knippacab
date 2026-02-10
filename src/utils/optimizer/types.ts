@@ -52,14 +52,17 @@ export interface ExpandedPart {
   partId: string;
   instanceIndex: number;   // 0-based; shown in label when quantity > 1
   name: string;            // already includes "(1/2)" suffix if quantity > 1
-  width: number;           // mm
-  height: number;          // mm
+  width: number;           // mm — Part.width (installed dimension)
+  height: number;          // mm — Part.height (installed dimension)
   thickness: number;       // mm — used to group parts by material
   material: string;
   grainDirection: GrainDirection;
   partType: PartType;
   cabinetId: string;
-  canRotate: boolean;      // true only for grainDirection === 'either'
+  // Placement orientation is derived from grainDirection in tryPlace():
+  //   'vertical'   → placed as (height × width) on sheet  [rotated=true]
+  //   'horizontal' → placed as (width × height) on sheet  [rotated=false]
+  //   'either'     → optimizer chooses best BSSF fit
 }
 
 // =============================================================================

@@ -113,56 +113,55 @@ describe('optimizeSheetCutting — basic correctness', () => {
 
 describe('optimizeSheetCutting — grain direction', () => {
 
-  test('vertical-grain part is NOT rotated', () => {
+  test('vertical-grain part is placed with height along sheet x-axis (grain-aligned)', () => {
+    // Plywood grain runs along the sheet's long axis (x-axis, 2440mm).
+    // A "vertical grain" part has grain running along its HEIGHT (e.g. a tall cabinet side).
+    // To align part grain with sheet grain, Part.height must run along the sheet x-axis.
+    // This means the part is placed "rotated": placed.width = Part.height, placed.height = Part.width.
     const part = makePart({ width: 600, height: 900, grainDirection: 'vertical' });
     const result = optimizeSheetCutting([part], STD);
     const placed = result.sheets[0].placements[0];
-    expect(placed.rotated).toBe(false);
-    expect(placed.width).toBe(600);
-    expect(placed.height).toBe(900);
+    expect(placed.rotated).toBe(true);
+    expect(placed.width).toBe(900);   // Part.height now runs along sheet x-axis
+    expect(placed.height).toBe(600);  // Part.width now runs along sheet y-axis
   });
 
-  test('horizontal-grain part is NOT rotated', () => {
+  test('horizontal-grain part is placed with width along sheet x-axis (grain-aligned)', () => {
+    // "Horizontal grain" = grain runs along Part.width (installed left↔right).
+    // Part.width must align with sheet x-axis → normal orientation, rotated=false.
     const part = makePart({ width: 900, height: 200, grainDirection: 'horizontal' });
     const result = optimizeSheetCutting([part], STD);
     const placed = result.sheets[0].placements[0];
     expect(placed.rotated).toBe(false);
+    expect(placed.width).toBe(900);
+    expect(placed.height).toBe(200);
   });
 
   test('"either" grain part CAN be rotated when it improves fit', () => {
-    // Sheet is 2440×1220. A 1200×200 part fits normally.
-    // A 200×1200 part is taller than the sheet (1200 > 1220 is fine, but 200×1200 normal orientation:
-    // width=200 ≤ 2440, height=1200 ≤ 1220 → fits).
-    // So let's create a situation where rotation is beneficial.
-    // Put a 1100×1100 part first (uses most of the sheet width), then a 300×1100 "either" part.
-    // Without rotation: 300w × 1100h — needs 300 remaining width → can fit right of first part.
-    // With rotation: 1100w × 300h — needs 1100 width which is NOT available right of first.
-    // So in this test, rotation should NOT occur.
-    // Let's test the simpler case: a part that only fits in rotated orientation.
     const settings: OptimizationSettings = {
       ...STD,
       sheetWidth: 500,
       sheetHeight: 200,
     };
-    // Part: 180×400. Normal: 180 ≤ 500, 400 > 200 → doesn't fit normally.
-    // Rotated: 400 ≤ 500, 180 ≤ 200 → fits rotated.
+    // Part: 180×400. Normal (180w×400h): 400 > 200 → doesn't fit.
+    // Rotated (400w×180h): 400 ≤ 500, 180 ≤ 200 → fits.
     const part = makePart({ width: 180, height: 400, grainDirection: 'either' });
     const result = optimizeSheetCutting([part], settings);
     expect(result.totalPartsPlaced).toBe(1);
     const placed = result.sheets[0].placements[0];
     expect(placed.rotated).toBe(true);
-    expect(placed.width).toBe(400);   // was height, now placed as width
-    expect(placed.height).toBe(180);  // was width, now placed as height
+    expect(placed.width).toBe(400);
+    expect(placed.height).toBe(180);
   });
 
-  test('"vertical" part that only fits rotated → goes to unplaced (rotation not allowed)', () => {
+  test('"vertical" grain part too large in its grain-aligned direction → goes to unplaced', () => {
     const settings: OptimizationSettings = {
       ...STD,
       sheetWidth: 500,
       sheetHeight: 200,
     };
-    // Same geometry as above but grain is vertical → cannot rotate
-    const part = makePart({ width: 180, height: 400, grainDirection: 'vertical' });
+    // Vertical grain: Part.height (600) runs along x-axis. 600 > sheetWidth (500) → can't fit.
+    const part = makePart({ width: 180, height: 600, grainDirection: 'vertical' });
     const result = optimizeSheetCutting([part], settings);
     expect(result.totalPartsPlaced).toBe(0);
     expect(result.unplacedParts).toHaveLength(1);
