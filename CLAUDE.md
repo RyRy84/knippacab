@@ -340,3 +340,89 @@ Actions: `setLoading`, `setError`, `clearError`.
 | `calculateDrawerFaceDimensions(w, h)` | `{width, height}` | Decorative face size |
 
 **Bottom method impact:** `captured_dado` → bottom panel is smaller (groove-to-groove) + notes added to all 4 walls. `applied`/`screwed` → full outer footprint.
+
+---
+
+### `src/db/init.web.ts` + `src/db/queries.web.ts` — Web Platform Stubs
+
+**Purpose:** expo-sqlite v16 requires `wa-sqlite.wasm` + `SharedArrayBuffer` (COOP/COEP headers) which are unavailable in the Expo dev server. Metro automatically picks `.web.ts` over `.ts` for web builds, so these stubs completely bypass the native SQLite on web with no config changes needed.
+
+- `init.web.ts` — `initDatabase()` is a no-op; `getDb()` throws; `closeDatabase()` is a no-op
+- `queries.web.ts` — Read functions return empty arrays/null; write functions are no-ops *except* `insertProject()` which still creates and returns a real in-memory `Project` object (Zustand needs a return value)
+
+**Web behavior:** Projects/cabinets live only in Zustand memory during the session. Data does not persist across page refreshes on web. This is acceptable for development and demo use.
+
+---
+
+### `src/types/index.ts` — TypeScript Types (Updated)
+
+**`PartType` union** added to support machine-readable part identification (replacing fragile name-string matching in joinery logic):
+
+```typescript
+export type PartType =
+  | 'side' | 'top' | 'bottom' | 'back' | 'toe_kick'
+  | 'door' | 'door_left' | 'door_right'
+  | 'drawer_front_inner' | 'drawer_back' | 'drawer_side'
+  | 'drawer_bottom' | 'drawer_face';
+```
+
+`Part` interface now includes `partType: PartType` alongside the human-readable `name: string`.
+
+---
+
+### `src/screens/ProjectSetupScreen.tsx` — Create New Project (Functional)
+
+**Purpose:** Collects project name, display unit preference, and default joinery method. On submit, calls `createProject()` from the store and navigates to ReviewEdit.
+
+**UI:** Project name TextInput → unit toggle (Imperial/Metric two-button) → 4 joinery radio cards (pocket_hole default with "DEFAULT" badge, descriptions for each) → Create / Cancel.
+
+**Validation:** Alerts if project name is empty. `navigation.replace('ReviewEdit')` used (not `navigate`) to prevent back-navigation to the setup form.
+
+---
+
+### `src/screens/CabinetBuilderScreen.tsx` — Add Cabinet to Project (Functional)
+
+**Purpose:** Configures a single cabinet and calls `addCabinet()` from the store. All user inputs are in inches; converted to mm via `inchesToMm()` before storage.
+
+**UI:** Cabinet type selector (3-button row: Base/Wall/Tall, auto-sets toe kick defaults) → Width TextInput in inches with standard sizes hint → defaults info card (yellow, shows type-specific H×D standards) → Toe kick options (3-button row, base cabinets only) → 2×2 joinery grid → Add Cabinet / Cancel.
+
+**Type defaults map (`TYPE_DEFAULTS`):** Drives the description card and the height/depth values passed to `addCabinet()`.
+
+---
+
+### `src/screens/ReviewEditScreen.tsx` — Cabinet List for Current Project (Functional)
+
+**Purpose:** Shows all cabinets in the current project. Serves as the hub between adding cabinets and generating the cut list.
+
+**UI:**
+- Blue project header with name and cabinet count
+- Scrollable list of `CabinetCard` components (type colored badge, W×H×D dimensions, joinery label, toe kick if base)
+- Each card has a red-outlined Delete button → `Alert.alert` confirmation → `deleteCabinet()`
+- Empty state with descriptive placeholder when no cabinets exist
+- Fixed footer: "Add Cabinet" (→ CabinetBuilder) + "Generate Cut List" (→ CuttingPlan, disabled when empty)
+
+**Unit display:** Uses `currentProject.units` to call `formatForDisplay()` — shows imperial or metric automatically.
+
+---
+
+### `src/screens/CalculatorDemoScreen.tsx` — Calculation Engine Demo (Functional)
+
+**Purpose:** Visual validation screen. Runs `calculateCabinetParts()` and `calculateDrawerParts()` with hardcoded sample inputs and displays all resulting parts. Useful for confirming the calculation engine before the full UI is built.
+
+**Three tabs:** Base 36" (8 parts incl. 2 doors) | Wall 30" (7 parts incl. 2 doors) | Drawer (6 parts incl. face)
+
+Each part row shows: name, material, notes (left) and W×H, thickness, grain direction badge (right).
+
+---
+
+### `src/__tests__/` — Unit Test Suites (93 tests, all passing)
+
+| File | Describes | Tests |
+|------|-----------|-------|
+| `cabinetCalculator.test.ts` | Part counts, side dims, top/bottom dims, back panel, toe kick, doors, dado notes | 21 |
+| `drawerCalculator.test.ts` | Part counts, side dims, front/back, bottom (all joinery methods), drawer face | 22 |
+| `revealCalculator.test.ts` | Single door, double doors, drawer face, stacked drawers | 12 |
+| `grainLogic.test.ts` | assignGrainDirection (all part types incl. doors/faces), canRotatePart, end-to-end | 19 |
+| `unitConversion.test.ts` | All conversion functions, fractional display, edge cases | 19 |
+
+Run with: `npm test`

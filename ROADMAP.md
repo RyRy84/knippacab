@@ -1,8 +1,8 @@
 # KnippaCab Development Roadmap
 
 **Purpose:** Guide development from foundation to MVP with clear milestones and deliverables.  
-**Last Updated:** February 7, 2026  
-**Current Phase:** Phase 1 - Foundation (In Progress)
+**Last Updated:** February 9, 2026
+**Current Phase:** Phase 3 - User Interface (In Progress)
 
 ---
 
@@ -30,16 +30,29 @@ Build a cross-platform cabinet design app that **eliminates calculation errors**
 - ✅ Project scaffolded (Expo + React Native + TypeScript)
 - ✅ Folder structure established
 - ✅ Unit conversion utility (`src/utils/unitConversion.ts`)
-- ✅ TypeScript types defined (`src/types/index.ts`)
+- ✅ TypeScript types defined (`src/types/index.ts`) — including `PartType` union
 - ✅ Cabinet constants (`src/constants/cabinetDefaults.ts`)
 - ✅ Navigation framework with placeholder screens
 - ✅ App is runnable and navigable
+- ✅ Cabinet dimension calculator (`src/utils/cabinetCalculator.ts`) — generates all parts incl. doors
+- ✅ Drawer dimension calculator (`src/utils/drawerCalculator.ts`) — generates all parts incl. drawer face
+- ✅ Reveal & gap calculator (`src/utils/revealCalculator.ts`)
+- ✅ Grain direction logic (`src/utils/grainLogic.ts`)
+- ✅ SQLite database (schema, migrations, CRUD queries)
+- ✅ Web platform stubs for SQLite (`init.web.ts`, `queries.web.ts`)
+- ✅ Zustand stores: projectStore, settingsStore, uiStore
+- ✅ Unit tests — 93 tests passing (cabinetCalculator, drawerCalculator, revealCalculator, grainLogic)
+- ✅ CalculatorDemoScreen — visual validation of calculation engine (3 tabs)
+- ✅ ProjectSetupScreen — functional form (name, units, joinery)
+- ✅ CabinetBuilderScreen — type selector, width input, toe kick, joinery
+- ✅ ReviewEditScreen — cabinet list with cards, delete, Add/Generate buttons
 
 **What We Have:**
-A working skeleton app you can click through. All foundational types and constants in place. No actual calculation features yet.
+A fully working end-to-end workflow: create project → add cabinets → review list.
+The calculation engine is fully validated with 93 unit tests. Web version runs cleanly.
 
-**Git Commits:** 4 total  
-**Lines of Code:** ~800 (foundation)  
+**Git Commits:** 13 total
+**Lines of Code:** ~5,000+
 **Can Run?** Yes (`npx expo start --web`)
 
 ---
@@ -71,10 +84,10 @@ calculateToeKickHeight(option: ToeKickOption, customHeight?: number): number
 - Custom toe kick at 120mm → correct height adjustment
 
 **Success Criteria:**
-- [ ] All standard cabinet types calculate correctly
-- [ ] Joinery adjustments work for all 4 methods
-- [ ] Toe kick options all calculate properly
-- [ ] Unit tests pass for edge cases
+- [x] All standard cabinet types calculate correctly
+- [x] Joinery adjustments work for all 4 methods
+- [x] Toe kick options all calculate properly
+- [x] Unit tests pass for edge cases
 
 **Deliverable:** Working calculator module with comprehensive tests
 
@@ -96,10 +109,10 @@ calculateDrawerFaceDimensions(drawerWidth, drawerHeight): { width, height }
 - Multiple drawer heights in one cabinet → faces calculated with reveals
 
 **Success Criteria:**
-- [ ] All 3 corner joinery methods calculate correctly
-- [ ] All 3 bottom attachment methods work
-- [ ] Drawer faces sized properly with reveals
-- [ ] Unit tests pass
+- [x] All 3 corner joinery methods calculate correctly
+- [x] All 3 bottom attachment methods work
+- [x] Drawer faces sized properly with reveals
+- [x] Unit tests pass
 
 **Deliverable:** Working drawer calculator with tests
 
@@ -121,10 +134,10 @@ calculateDrawerFaceDims(openingWidth, openingHeight): { width, height }
 - Stack of 3 drawers → faces calculated with 3mm gaps between
 
 **Success Criteria:**
-- [ ] Single doors sized correctly
-- [ ] Double doors sized correctly with center gap
-- [ ] Drawer faces account for reveals
-- [ ] Works in both Imperial and Metric display
+- [x] Single doors sized correctly
+- [x] Double doors sized correctly with center gap
+- [x] Drawer faces account for reveals
+- [x] Works in both Imperial and Metric display
 
 **Deliverable:** Reveal calculator that handles all scenarios
 
@@ -150,9 +163,9 @@ getOptimalOrientation(part: Part): 'horizontal' | 'vertical'
 - Hidden shelves → either (can rotate)
 
 **Success Criteria:**
-- [ ] All part types assigned correct grain rules
-- [ ] Rotation permissions accurate
-- [ ] Logic documented with reasoning
+- [x] All part types assigned correct grain rules
+- [x] Rotation permissions accurate
+- [x] Logic documented with reasoning
 
 **Deliverable:** Grain direction rule engine
 
@@ -161,10 +174,10 @@ getOptimalOrientation(part: Part): 'horizontal' | 'vertical'
 ### Phase 1 Success Criteria
 
 **Can we calculate a complete cabinet?**
-- [ ] User inputs: Base cabinet, 914mm wide, pocket screws, standard toe kick
-- [ ] App calculates: All part dimensions including adjusted door size
-- [ ] Output: Complete parts list with grain directions
-- [ ] Verified: Manual calculation matches app output
+- [x] User inputs: Base cabinet, 914mm wide, pocket screws, standard toe kick
+- [x] App calculates: All part dimensions including adjusted door size
+- [x] Output: Complete parts list with grain directions
+- [x] Verified: Manual calculation matches app output (93 unit tests)
 
 **Testing Strategy:**
 - Unit tests for each calculator function
@@ -287,10 +300,10 @@ getOptimalOrientation(part: Part): 'horizontal' | 'vertical'
 - All fields pre-filled with sensible defaults
 
 **Success Criteria:**
-- [ ] Form inputs work (controlled components)
-- [ ] Validation provides helpful feedback
-- [ ] Creates project in database
-- [ ] Navigates with project ID in route params
+- [x] Form inputs work (controlled components)
+- [x] Validation provides helpful feedback
+- [x] Creates project in database
+- [x] Navigates with project ID in route params
 
 ---
 
@@ -327,11 +340,11 @@ getOptimalOrientation(part: Part): 'horizontal' | 'vertical'
    - "Cancel"
 
 **Success Criteria:**
-- [ ] All inputs work smoothly
-- [ ] Units convert properly (mm ↔ inches)
-- [ ] Preview updates in real-time
-- [ ] Cabinet saves to database
-- [ ] Form clears after save
+- [x] All inputs work smoothly
+- [x] Units convert properly (mm ↔ inches)
+- [ ] Preview updates in real-time (deferred — defaults card shown instead)
+- [x] Cabinet saves to database
+- [x] Form clears after save
 
 ---
 
@@ -392,10 +405,10 @@ getOptimalOrientation(part: Part): 'horizontal' | 'vertical'
    - "Generate Cut List" → navigates to Cut List screen
 
 **Success Criteria:**
-- [ ] Lists all cabinets
-- [ ] Edit navigates back to builder (pre-filled)
-- [ ] Delete removes from database
-- [ ] UI updates immediately
+- [x] Lists all cabinets
+- [ ] Edit navigates back to builder (pre-filled) — deferred to next session
+- [x] Delete removes from database
+- [x] UI updates immediately
 
 ---
 
