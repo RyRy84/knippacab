@@ -9,7 +9,7 @@ export type RootStackParamList = {
   Home: undefined;
   ProjectSetup: undefined;
   CabinetBuilder: undefined;
-  DrawerBuilder: undefined;
+  DrawerBuilder: { cabinetId: string };
   ReviewEdit: undefined;
   CuttingPlan: undefined;
   VisualDiagram: undefined;

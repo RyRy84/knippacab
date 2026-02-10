@@ -432,6 +432,33 @@ export type PartType =
 
 ---
 
+### `src/screens/DrawerBuilderScreen.tsx` — Add Drawers to a Cabinet (Functional)
+
+**Purpose:** Configures 1–10 drawer boxes for an existing cabinet. Reached via "Add Drawers" on each ReviewEditScreen cabinet card.
+
+**Route param:** `{ cabinetId: string }` — looked up in `cabinets` store array.
+
+**UI sections:**
+- Purple context card (cabinet type + W×H)
+- Drawer count stepper (− / count / +), 1–10
+- Per-drawer height inputs in inches; "Auto-Balance" toggle pill distributes cabinet height equally; height summary bar (used/available/remaining, turns red when over)
+- Corner joinery radio cards: Pocket Hole / Butt + Screws / Dado (with description)
+- Bottom attachment radio cards: Applied / Captured Dado / Screwed (with description)
+- "Add N Drawers to Cabinet" save button (purple), Cancel
+
+**Dimension math (applied on save):**
+```
+box width  = cabinet.width  − (2 × 12.7mm slide clearance)
+box height = inchesToMm(user_input) − 12.7mm top clearance
+box depth  = cabinet.depth  − 50.8mm front setback
+```
+
+**Validation:** height ≥ 3", total ≤ cabinet height. Saves via `addDrawer(cabinetId, input)` for each drawer.
+
+**Also changed:** `navigation/types.ts` (`DrawerBuilder: { cabinetId: string }`), `ReviewEditScreen` (added "Add Drawers" purple button to each cabinet card).
+
+---
+
 ### `src/screens/CuttingPlanScreen.tsx` — Cut List Screen (Functional)
 
 **Purpose:** Reads all cabinets from projectStore, calls `calculateCabinetParts()` for each, collects all `Part[]` into one array, groups by material, and displays them in a ScrollView.

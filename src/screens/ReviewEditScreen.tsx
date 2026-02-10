@@ -58,11 +58,13 @@ function CabinetCard({
   index,
   units,
   onDelete,
+  onAddDrawers,
 }: {
   cabinet: Cabinet;
   index: number;
   units: MeasurementUnit;
   onDelete: () => void;
+  onAddDrawers: () => void;
 }) {
   const fmt = (mm: number) => formatForDisplay(mm, units);
 
@@ -103,6 +105,11 @@ function CabinetCard({
           {toeKickLabel}
         </Text>
       )}
+
+      {/* ── Add Drawers link ──────────────────────────────────────────── */}
+      <TouchableOpacity style={styles.addDrawersBtn} onPress={onAddDrawers}>
+        <Text style={styles.addDrawersBtnText}>+ Add Drawers</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -176,6 +183,7 @@ export default function ReviewEditScreen({ navigation }: Props) {
               index={index}
               units={units}
               onDelete={() => handleDelete(cabinet, index)}
+              onAddDrawers={() => navigation.navigate('DrawerBuilder', { cabinetId: cabinet.id })}
             />
           ))
         )}
@@ -340,6 +348,19 @@ const styles = StyleSheet.create({
   cardDetailLabel: {
     fontWeight: '600',
     color: '#424242',
+  },
+  addDrawersBtn: {
+    marginTop: 10,
+    paddingVertical: 7,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#6A1B9A',
+    alignItems: 'center',
+  },
+  addDrawersBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6A1B9A',
   },
 
   // Footer

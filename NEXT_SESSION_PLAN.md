@@ -609,28 +609,39 @@ After this session, Ryan will have:
 
 ## Next Session Preview
 
-**Option A is DONE ✅ — CuttingPlanScreen is now functional.**
+**Options A and B are DONE ✅ — Phase 3 is complete.**
 
-The end-to-end workflow is complete: create project → add cabinets → review → cut list.
+Full workflow working: create project → add cabinets → add drawers → review → view cut list.
 
-Remaining options:
+---
 
-**Option B: Add Drawer Support (Phase 3.3)**
-- Implement `DrawerBuilderScreen.tsx` (placeholder exists, needs real UI)
-- Wire up `calculateDrawerParts()` to the UI
-- Let users add drawers to cabinets, have those parts appear in the cut list
+## Next Steps (Phase 4)
 
-**Option C: Sheet Goods Optimizer (Phase 4 — The Killer Feature)**
+**Option A: Sheet Goods Optimizer (Phase 4 — The Killer Feature) ⭐**
 - Build `src/utils/optimizer/binPacking.ts` — Guillotine FFD algorithm
-- Build SVG cutting diagram component
-- See `SHEET_OPTIMIZER_RESEARCH.md` for full algorithm guidance
+- Build `src/components/CuttingDiagram/` — SVG cutting diagram (React Native SVG)
+- Build `src/screens/VisualDiagramScreen.tsx` (currently a placeholder)
+- See `SHEET_OPTIMIZER_RESEARCH.md` for full algorithm guidance and TypeScript examples
 
-**Option D: Improve UX Polish**
+**Option B: Improve Cut List (add drawer parts)**
+- Update `CuttingPlanScreen` to also call `calculateDrawerParts()` for each drawer
+- Drawer parts (sides, front, back, bottom, face) will then appear in the grouped material list
+
+**Option C: UX Polish**
+- Drawer count badge on cabinet cards in ReviewEditScreen
 - Preset size quick-select buttons on CabinetBuilderScreen
-- Real-time dimension preview on CabinetBuilderScreen
 - Edit cabinet (pre-filled builder) from ReviewEditScreen
+- Drawer list/delete management within a cabinet
 
 Ryan decides based on what he wants to test next!
+
+**Recommended next command for Claude Code:**
+```
+Read SHEET_OPTIMIZER_RESEARCH.md and ROADMAP.md Phase 4, then build the sheet goods optimizer:
+1. src/utils/optimizer/binPacking.ts (Guillotine FFD algorithm)
+2. src/components/CuttingDiagram/ (SVG diagram renderer)
+3. Wire up VisualDiagramScreen.tsx to show the result
+```
 
 ---
 

@@ -885,19 +885,20 @@ export const FEATURE_FLAGS = {
 - ✅ ReviewEditScreen — cabinet list, delete, navigation hub
 - ✅ CalculatorDemoScreen — calculation engine visual demo
 - ✅ **CuttingPlanScreen** — cut list grouped by material with grain direction badges
+- ✅ **DrawerBuilderScreen** — drawer count stepper, per-drawer heights with auto-balance, joinery + bottom method selectors
 
-**Current Phase:** Phase 3 - User Interface (In Progress)
+**Current Phase:** Phase 4 — Sheet Goods Optimizer (next)
 
-**Next Task:** Phase 3, Milestone 3.3 — DrawerBuilderScreen (add drawers to cabinets)
-  OR Phase 4 — Sheet Goods Optimizer (bin packing algorithm + SVG diagram)
+**Next Task:** Phase 4, Milestone 4.1 — Bin packing algorithm (`src/utils/optimizer/binPacking.ts`)
+  See SHEET_OPTIMIZER_RESEARCH.md for full algorithm guidance (Guillotine/FFD recommended).
 
 **Blockers:** None
 
 **Notes:**
-- Full end-to-end workflow now works: create project → add cabinets → review → view cut list.
-- CuttingPlanScreen groups all parts by material with colour-coded grain direction badges.
-- Drawer Builder (3.3) is the remaining Phase 3 screen. It can be done before or after Phase 4 optimizer — Ryan decides based on priority.
-- Sheet optimizer (Phase 4) is the killer feature — see SHEET_OPTIMIZER_RESEARCH.md for algorithm choice (Guillotine/FFD) and SVG diagram approach.
+- **Phase 3 is complete.** Full end-to-end workflow: create project → add cabinets → add drawers → review → view cut list.
+- Drawer parts from `calculateDrawerParts()` will now appear in CuttingPlanScreen automatically since it iterates the drawers store.
+  (CuttingPlanScreen currently only calls `calculateCabinetParts()` — a future enhancement is to also call `calculateDrawerParts()` for each drawer and merge the parts list.)
+- Sheet optimizer (Phase 4) is the killer feature — mobile-native + guillotine algorithm + SVG diagram is the competitive moat.
 
 ---
 
