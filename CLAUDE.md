@@ -22,6 +22,8 @@ KnippaCab is a cross-platform cabinet design app built with **React Native + Exp
 ```
 KnippaCab/
 ├── CLAUDE.md              # This file — project context for Claude Code
+├── FEATURE_BACKLOG.md     # V2+ features deferred pending user feedback
+├── UX_DECISIONS.md        # Documentation of key UX decisions and rationale
 ├── app.json               # Expo config
 ├── package.json
 ├── tsconfig.json
@@ -121,6 +123,10 @@ Door height = Cabinet height - 3mm (top) - 0mm (bottom, base cabs)
 - Face-frame cabinet support
 - Cloud sync
 - Dovetail drawer construction
+- **User-selectable measurement precision (1/16", 1/32", 1/64")**
+- **Optional decimal input snapping/rounding to fractions**
+- **Fractional picker modal for touch-friendly input**
+- **Inline slider/stepper for visual measurement adjustment**
 
 ## Joinery Methods Supported (V1)
 
