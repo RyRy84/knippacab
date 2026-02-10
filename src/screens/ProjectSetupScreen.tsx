@@ -71,8 +71,10 @@ export default function ProjectSetupScreen({ navigation }: Props) {
       return;
     }
     createProject({ name: trimmed, units, defaultJoinery: joinery });
-    // Go to ReviewEdit — it shows an empty cabinet list and the "Add Cabinet" button
-    navigation.replace('ReviewEdit');
+    // Go to ReviewEdit — it shows an empty cabinet list and the "Add Cabinet" button.
+    // Using navigate (not replace) for reliable web compatibility; the back button
+    // from ReviewEdit intentionally returns here if the user wants to reconfigure.
+    navigation.navigate('ReviewEdit');
   }
 
   return (
