@@ -195,6 +195,59 @@ const label = formatForDisplay(876, "imperial");  // → '34 1/2"'
 
 ---
 
+### `src/utils/helpers.ts` — ID Generation & Date Utilities
+
+- `generateId(): string` — UUID v4 without extra dependencies
+- `nowIso(): string` — current UTC time as ISO 8601 string
+
+---
+
+### `src/db/schema.ts` — SQLite Table Definitions
+
+SQL CREATE TABLE strings for: `projects`, `cabinets`, `drawers`, `settings`. Also index definitions. `CURRENT_SCHEMA_VERSION = 1`.
+
+### `src/db/migrations.ts` — Migration Definitions
+
+`MIGRATIONS: Migration[]` array. Each entry has `version`, `description`, `statements[]`. Add new entries to extend the schema — never edit existing ones.
+
+### `src/db/init.ts` — Database Initialization
+
+- `initDatabase(): void` — call once at app startup (idempotent). Opens `knippacab.db`, enables foreign keys, runs pending migrations.
+- `getDb(): SQLiteDatabase` — returns the singleton (throws if not initialized).
+- `closeDatabase(): void` — for testing/cleanup.
+
+### `src/db/queries.ts` — CRUD Operations
+
+| Entity | Functions |
+|--------|-----------|
+| Project | `getAllProjects`, `getProject`, `insertProject`, `updateProject`, `deleteProject` |
+| Cabinet | `getCabinetsForProject`, `getCabinet`, `insertCabinet`, `updateCabinet`, `deleteCabinet` |
+| Drawer | `getDrawersForCabinet`, `getDrawer`, `insertDrawer`, `updateDrawer`, `deleteDrawer` |
+| Settings | `getSetting(key, default)`, `setSetting(key, value)` |
+
+All use synchronous expo-sqlite API. Cascading deletes via foreign keys (project→cabinets→drawers).
+
+---
+
+### `src/store/settingsStore.ts` — User Preferences (Zustand)
+
+State: `units`, `defaultJoinery`, `defaultSawKerf`, `defaultToeKick`.
+Actions: `loadSettings()` (call at startup), `setUnits()`, `setDefaultJoinery()`, `setDefaultSawKerf()`, `setDefaultToeKick()`.
+All setters persist to SQLite immediately.
+
+### `src/store/projectStore.ts` — Project/Cabinet/Drawer State (Zustand)
+
+State: `projects[]`, `currentProject`, `cabinets[]`, `drawers[]`.
+Actions: `loadAllProjects`, `createProject`, `openProject`, `updateCurrentProject`, `deleteProject`, `closeProject`, `addCabinet`, `updateCabinet`, `deleteCabinet`, `duplicateCabinet`, `addDrawer`, `updateDrawer`, `deleteDrawer`, `getDrawersForCabinet`.
+Every mutation writes to SQLite and updates in-memory state atomically.
+
+### `src/store/uiStore.ts` — UI State (Zustand)
+
+State: `isLoading`, `error`.
+Actions: `setLoading`, `setError`, `clearError`.
+
+---
+
 ### `src/constants/cabinetDefaults.ts` — Standard Dimensions & Defaults
 
 **Purpose:** Single source of truth for all standard cabinet dimensions, material thicknesses, reveal gaps, and default values. All values in mm with Imperial equivalents in comments.
