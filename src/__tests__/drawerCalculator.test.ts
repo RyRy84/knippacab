@@ -6,7 +6,7 @@
 
 import { calculateDrawerParts, calculateDrawerFaceDimensions } from '../utils/drawerCalculator';
 import { Drawer } from '../types';
-import { THICKNESS_1_2_INCH_MM } from '../constants/cabinetDefaults';
+import { THICKNESS_1_2_INCH_MM, THICKNESS_3_4_INCH_MM } from '../constants/cabinetDefaults';
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -27,14 +27,14 @@ function makeDrawer(overrides: Partial<Drawer> = {}): Drawer {
 // ─── Part count ───────────────────────────────────────────────────────────────
 
 describe('calculateDrawerParts — part count', () => {
-  test('always returns exactly 5 parts', () => {
-    expect(calculateDrawerParts(makeDrawer())).toHaveLength(5);
+  test('always returns exactly 6 parts (5 box + 1 face)', () => {
+    expect(calculateDrawerParts(makeDrawer())).toHaveLength(6);
   });
 
-  test('dado corners + captured bottom still returns 5 parts', () => {
+  test('dado corners + captured bottom still returns 6 parts', () => {
     expect(calculateDrawerParts(
       makeDrawer({ cornerJoinery: 'dado', bottomMethod: 'captured_dado' })
-    )).toHaveLength(5);
+    )).toHaveLength(6);
   });
 });
 
@@ -131,6 +131,36 @@ describe('calculateDrawerParts — grain directions', () => {
     const parts = calculateDrawerParts(makeDrawer());
     const bottom = parts.find(p => p.name === 'Drawer Bottom');
     expect(bottom?.grainDirection).toBe('either');
+  });
+});
+
+// ─── Drawer face panel ────────────────────────────────────────────────────────
+
+describe('calculateDrawerParts — drawer face', () => {
+  test('every drawer gets a face panel', () => {
+    const parts = calculateDrawerParts(makeDrawer());
+    const face = parts.find(p => p.name === 'Drawer Face');
+    expect(face).toBeDefined();
+  });
+
+  test('face uses 3/4" thickness', () => {
+    const parts = calculateDrawerParts(makeDrawer());
+    const face = parts.find(p => p.name === 'Drawer Face');
+    expect(face?.thickness).toBe(THICKNESS_3_4_INCH_MM); // 18.75mm
+  });
+
+  test('wide drawer face (width > 1.5× height) has horizontal grain', () => {
+    // 850mm wide × 150mm tall → ratio = 5.67 → horizontal
+    const parts = calculateDrawerParts(makeDrawer({ width: 850, height: 150 }));
+    const face = parts.find(p => p.name === 'Drawer Face');
+    expect(face?.grainDirection).toBe('horizontal');
+  });
+
+  test('face is smaller than the opening by the reveal amounts', () => {
+    const parts = calculateDrawerParts(makeDrawer({ width: 850, height: 150 }));
+    const face = parts.find(p => p.name === 'Drawer Face');
+    expect(face?.width).toBeLessThan(850);
+    expect(face?.height).toBeLessThan(150);
   });
 });
 

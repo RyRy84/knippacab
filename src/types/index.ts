@@ -120,6 +120,31 @@ export type DrawerCornerJoinery = "pocket_hole" | "butt" | "dado";
  */
 export type DrawerBottomMethod = "applied" | "captured_dado" | "screwed";
 
+/**
+ * The structural role of a part within a cabinet or drawer.
+ * Used by the sheet optimizer to group and sort parts, and by the cut list
+ * UI to assign icons, labels, and grain direction rules.
+ *
+ * Cabinet box parts: side, top, bottom, back, toe_kick
+ * Door parts:        door (single), door_left, door_right (double)
+ * Drawer box parts:  drawer_front_inner, drawer_back, drawer_side,
+ *                    drawer_bottom, drawer_face (decorative face panel)
+ */
+export type PartType =
+  | 'side'
+  | 'top'
+  | 'bottom'
+  | 'back'
+  | 'toe_kick'
+  | 'door'
+  | 'door_left'
+  | 'door_right'
+  | 'drawer_front_inner'
+  | 'drawer_back'
+  | 'drawer_side'
+  | 'drawer_bottom'
+  | 'drawer_face';
+
 // =============================================================================
 // CORE DATA INTERFACES
 // =============================================================================
@@ -299,6 +324,13 @@ export interface Part {
    * Foreign key → Drawer.id.
    */
   readonly drawerId: string | null;
+
+  /**
+   * The structural role of this part (e.g., 'side', 'door_left', 'drawer_face').
+   * Used by the sheet optimizer and cut list UI for grouping, sorting, and icons.
+   * Mirrors the `name` field but machine-readable instead of human-readable.
+   */
+  partType: PartType;
 
   /**
    * Human-readable name describing what this part is.

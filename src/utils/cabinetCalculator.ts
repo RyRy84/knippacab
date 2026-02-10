@@ -53,6 +53,7 @@ import {
   DEFAULT_BACK_MATERIAL,
 } from '../constants/cabinetDefaults';
 import { assignGrainDirection } from './grainLogic';
+import { calculateSingleDoorDims, calculateDoubleDoorDims } from './revealCalculator';
 
 // =============================================================================
 // TYPES
@@ -158,6 +159,7 @@ export function calculateCabinetParts(cabinet: Cabinet): Part[] {
   // ─── SIDE PANELS ──────────────────────────────────────────────────────────
 
   addPart({
+    partType: 'side',
     name: 'Left Side',
     width: panelDepth,          // depth direction (front to back)
     height: cabinet.height,     // full box height (vertical)
@@ -169,6 +171,7 @@ export function calculateCabinetParts(cabinet: Cabinet): Part[] {
   });
 
   addPart({
+    partType: 'side',
     name: 'Right Side',
     width: panelDepth,
     height: cabinet.height,
@@ -182,6 +185,7 @@ export function calculateCabinetParts(cabinet: Cabinet): Part[] {
   // ─── TOP PANEL ────────────────────────────────────────────────────────────
 
   addPart({
+    partType: 'top',
     name: 'Top Panel',
     width: topBottomWidth,      // horizontal span between (or into) sides
     height: panelDepth,         // depth direction
@@ -195,6 +199,7 @@ export function calculateCabinetParts(cabinet: Cabinet): Part[] {
   // ─── BOTTOM PANEL ─────────────────────────────────────────────────────────
 
   addPart({
+    partType: 'bottom',
     name: 'Bottom Panel',
     width: topBottomWidth,
     height: panelDepth,
@@ -207,21 +212,15 @@ export function calculateCabinetParts(cabinet: Cabinet): Part[] {
 
   // ─── BACK PANEL ───────────────────────────────────────────────────────────
 
-  /**
-   * The back panel covers the full outer width and full box height.
-   * With pocket_hole / butt joints: nailed/stapled flush to the back edge.
-   * With dado_rabbet: captured in a rabbet cut along the back edge of the sides
-   *   (and optionally the top/bottom). We use the same full-size dimension
-   *   either way — the rabbet depth just means it recesses into the frame.
-   */
   addPart({
+    partType: 'back',
     name: 'Back Panel',
     width: cabinet.width,
     height: cabinet.height,
     thickness: backThickness,
     quantity: 1,
     material: DEFAULT_BACK_MATERIAL,
-    grainDirection: 'vertical',   // preferred, but can rotate if optimizer needs
+    grainDirection: 'vertical',
     notes: cabinet.joineryMethod === 'dado_rabbet'
       ? `Slides into ${backThickness}mm rabbet cut along back edges of sides.`
       : 'Flush with back edge of sides, top, and bottom.',
@@ -229,19 +228,6 @@ export function calculateCabinetParts(cabinet: Cabinet): Part[] {
 
   // ─── TOE KICK ─────────────────────────────────────────────────────────────
 
-  /**
-   * The toe kick board is a horizontal panel at the base of the cabinet front.
-   * It creates the recessed space at floor level so you can stand close.
-   *
-   * Toe kick fits BETWEEN the side panels (same rule as top/bottom):
-   *   Width = cabinet width − (2 × side thickness)
-   *
-   * Only added for base cabinets with toeKickOption !== 'none'.
-   * (Wall and tall cabinets typically don't have toe kicks.)
-   *
-   * NOTE: With dado_rabbet joinery, the toe kick does NOT get the dado
-   * adjustment — it's a structural kickplate, not captured in a groove.
-   */
   const toeKickHeight = calculateToeKickHeight(
     cabinet.toeKickOption,
     cabinet.toeKickHeight
@@ -249,8 +235,9 @@ export function calculateCabinetParts(cabinet: Cabinet): Part[] {
 
   if (toeKickHeight > 0) {
     addPart({
+      partType: 'toe_kick',
       name: 'Toe Kick',
-      width: cabinet.width - (2 * sideThickness),   // between the sides
+      width: cabinet.width - (2 * sideThickness),
       height: toeKickHeight,
       thickness: sideThickness,
       quantity: 1,
@@ -259,6 +246,59 @@ export function calculateCabinetParts(cabinet: Cabinet): Part[] {
       notes: 'Horizontal kickplate at base of cabinet front.',
     });
   }
+
+  // ─── DOOR PANELS ──────────────────────────────────────────────────────────
+  // Base and wall cabinets get doors. Tall cabinets get doors too, but that
+  // requires a different reveal calc — deferred to Phase 2 configuration UI.
+  // Rule: cabinets wider than 600mm (≈24") get double doors.
+  // TODO Phase 2: Make doors optional/configurable per cabinet.
+
+  if (cabinet.type === 'base' || cabinet.type === 'wall') {
+    const useDoubleDoors = cabinet.width > 600;
+
+    if (useDoubleDoors) {
+      const doorDims = calculateDoubleDoorDims(cabinet.width, cabinet.height);
+      addPart({
+        partType: 'door_left',
+        name: 'Door Left',
+        width: doorDims.leftWidth,
+        height: doorDims.height,
+        thickness: THICKNESS_3_4_INCH_MM,
+        quantity: 1,
+        material: DEFAULT_BOX_MATERIAL,
+        grainDirection: 'vertical',   // door grain always runs vertically
+        notes: 'Left door panel.',
+      });
+      addPart({
+        partType: 'door_right',
+        name: 'Door Right',
+        width: doorDims.rightWidth,
+        height: doorDims.height,
+        thickness: THICKNESS_3_4_INCH_MM,
+        quantity: 1,
+        material: DEFAULT_BOX_MATERIAL,
+        grainDirection: 'vertical',
+        notes: 'Right door panel.',
+      });
+    } else {
+      const doorDims = calculateSingleDoorDims(cabinet.width, cabinet.height);
+      addPart({
+        partType: 'door',
+        name: 'Door',
+        width: doorDims.width,
+        height: doorDims.height,
+        thickness: THICKNESS_3_4_INCH_MM,
+        quantity: 1,
+        material: DEFAULT_BOX_MATERIAL,
+        grainDirection: 'vertical',
+        notes: 'Door panel.',
+      });
+    }
+  }
+
+  // TODO Phase 5: Add joinery hole pattern specifications
+  // TODO Phase 5: Calculate screw/nail quantities
+  // TODO Phase 5: Generate hardware shopping list
 
   return parts;
 }
@@ -288,7 +328,7 @@ export function adjustForJoinery(part: Part, joinery: JoineryMethod): Part {
   }
 
   // Dado/rabbet: widen top and bottom panels to extend into the dado grooves
-  if (part.name === 'Top Panel' || part.name === 'Bottom Panel') {
+  if (part.partType === 'top' || part.partType === 'bottom') {
     const adjustment = 2 * DADO_DEPTH_MM;
     return {
       ...part,
@@ -298,7 +338,7 @@ export function adjustForJoinery(part: Part, joinery: JoineryMethod): Part {
   }
 
   // Side panels: add note about required dado cuts (no dimension change needed)
-  if (part.name === 'Left Side' || part.name === 'Right Side') {
+  if (part.partType === 'side') {
     const dadoNote = `Cut dado ${DADO_DEPTH_MM}mm deep × ${THICKNESS_3_4_INCH_MM}mm wide for top/bottom panels.`;
     return {
       ...part,

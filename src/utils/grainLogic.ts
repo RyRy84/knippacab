@@ -52,6 +52,7 @@ const VERTICAL_GRAIN_PREFIXES: readonly string[] = [
   'Right Side',
   'Drawer Left Side',
   'Drawer Right Side',
+  'Door',             // matches 'Door', 'Door Left', 'Door Right' — always vertical
 ];
 
 /**
@@ -64,6 +65,7 @@ const HORIZONTAL_GRAIN_PREFIXES: readonly string[] = [
   'Shelf',
   'Drawer Front',
   'Drawer Back',
+  'Drawer Face',      // drawer face panels are typically wider than tall → horizontal
   'Toe Kick',
 ];
 

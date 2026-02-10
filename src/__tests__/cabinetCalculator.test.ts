@@ -37,23 +37,39 @@ function makeBaseCabinet(overrides: Partial<Cabinet> = {}): Cabinet {
 // ─── Part count ──────────────────────────────────────────────────────────────
 
 describe('calculateCabinetParts — part count', () => {
-  test('base cabinet with standard toe kick returns 6 parts', () => {
+  // 914mm (36") > 600mm threshold → double doors (+2)
+  test('36" base with standard toe kick returns 8 parts (box + toe kick + 2 doors)', () => {
     const parts = calculateCabinetParts(makeBaseCabinet());
-    expect(parts).toHaveLength(6); // left, right, top, bottom, back, toe kick
+    expect(parts).toHaveLength(8); // left, right, top, bottom, back, toe kick, door_left, door_right
   });
 
-  test('base cabinet with no toe kick returns 5 parts', () => {
+  test('36" base with no toe kick returns 7 parts (box + 2 doors)', () => {
     const parts = calculateCabinetParts(
       makeBaseCabinet({ toeKickOption: 'none', toeKickHeight: 0 })
     );
-    expect(parts).toHaveLength(5);
+    expect(parts).toHaveLength(7);
   });
 
-  test('wall cabinet with no toe kick returns 5 parts', () => {
+  test('22" base with standard toe kick returns 7 parts (box + toe kick + 1 door)', () => {
+    // 559mm < 600mm threshold → single door (+1)
+    const parts = calculateCabinetParts(
+      makeBaseCabinet({ width: 559 })
+    );
+    expect(parts).toHaveLength(7); // left, right, top, bottom, back, toe kick, door
+  });
+
+  test('tall cabinet returns 5 parts (no doors in V1)', () => {
+    const parts = calculateCabinetParts(
+      makeBaseCabinet({ type: 'tall', toeKickOption: 'none', toeKickHeight: 0 })
+    );
+    expect(parts).toHaveLength(5); // sides, top, bottom, back — no doors for tall
+  });
+
+  test('36" wall cabinet with no toe kick returns 7 parts (box + 2 doors)', () => {
     const parts = calculateCabinetParts(
       makeBaseCabinet({ type: 'wall', toeKickOption: 'none', toeKickHeight: 0 })
     );
-    expect(parts).toHaveLength(5);
+    expect(parts).toHaveLength(7);
   });
 });
 
@@ -166,6 +182,51 @@ describe('calculateCabinetParts — toe kick', () => {
     );
     const toeKick = parts.find(p => p.name === 'Toe Kick');
     expect(toeKick).toBeUndefined();
+  });
+});
+
+// ─── Door panels ─────────────────────────────────────────────────────────────
+
+describe('calculateCabinetParts — door panels', () => {
+  test('36" wide cabinet gets double doors (> 600mm threshold)', () => {
+    const parts = calculateCabinetParts(makeBaseCabinet({ width: 914 }));
+    const leftDoor  = parts.find(p => p.name === 'Door Left');
+    const rightDoor = parts.find(p => p.name === 'Door Right');
+    expect(leftDoor).toBeDefined();
+    expect(rightDoor).toBeDefined();
+  });
+
+  test('22" wide cabinet gets a single door (< 600mm threshold)', () => {
+    const parts = calculateCabinetParts(makeBaseCabinet({ width: 559 }));
+    const door = parts.find(p => p.name === 'Door');
+    expect(door).toBeDefined();
+  });
+
+  test('all door panels have vertical grain', () => {
+    const parts = calculateCabinetParts(makeBaseCabinet({ width: 914 }));
+    const doors = parts.filter(p =>
+      p.name === 'Door Left' || p.name === 'Door Right' || p.name === 'Door'
+    );
+    expect(doors.length).toBeGreaterThan(0);
+    doors.forEach(d => expect(d.grainDirection).toBe('vertical'));
+  });
+
+  test('double door widths sum to less than cabinet width', () => {
+    const parts = calculateCabinetParts(makeBaseCabinet({ width: 914 }));
+    const left  = parts.find(p => p.name === 'Door Left');
+    const right = parts.find(p => p.name === 'Door Right');
+    const totalDoorWidth = (left?.width ?? 0) + (right?.width ?? 0);
+    expect(totalDoorWidth).toBeLessThan(914);
+  });
+
+  test('tall cabinet does not get doors (V1 deferred)', () => {
+    const parts = calculateCabinetParts(
+      makeBaseCabinet({ type: 'tall', toeKickOption: 'none', toeKickHeight: 0 })
+    );
+    const doors = parts.filter(p =>
+      p.name === 'Door' || p.name === 'Door Left' || p.name === 'Door Right'
+    );
+    expect(doors).toHaveLength(0);
   });
 });
 

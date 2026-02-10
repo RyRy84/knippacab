@@ -22,10 +22,6 @@ import {
 } from 'react-native';
 import { calculateCabinetParts } from '../utils/cabinetCalculator';
 import { calculateDrawerParts } from '../utils/drawerCalculator';
-import {
-  calculateSingleDoorDims,
-  calculateDoubleDoorDims,
-} from '../utils/revealCalculator';
 import { formatForDisplay } from '../utils/unitConversion';
 import { Cabinet, Drawer, Part } from '../types';
 import {
@@ -126,18 +122,6 @@ function PartRow({ part }: { part: Part }) {
   );
 }
 
-/**
- * A label + value pair in the door/face info card.
- */
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
-    </View>
-  );
-}
-
 // =============================================================================
 // MAIN SCREEN
 // =============================================================================
@@ -146,12 +130,10 @@ export default function CalculatorDemoScreen() {
   const [activeTab, setActiveTab] = useState<TabId>('base');
 
   // Run calculators once; useMemo prevents re-calculating on every render.
+  // Doors and drawer faces are now included directly in the parts arrays.
   const baseParts   = useMemo(() => calculateCabinetParts(SAMPLE_BASE_CABINET), []);
   const wallParts   = useMemo(() => calculateCabinetParts(SAMPLE_WALL_CABINET), []);
   const drawerParts = useMemo(() => calculateDrawerParts(SAMPLE_DRAWER), []);
-
-  const baseDoor  = useMemo(() => calculateSingleDoorDims(SAMPLE_BASE_CABINET.width, SAMPLE_BASE_CABINET.height), []);
-  const wallDoors = useMemo(() => calculateDoubleDoorDims(SAMPLE_WALL_CABINET.width, SAMPLE_WALL_CABINET.height), []);
 
   const fmt = (mm: number) => formatForDisplay(mm, 'imperial');
 
@@ -190,14 +172,8 @@ export default function CalculatorDemoScreen() {
               <Text style={styles.configDetail}>Pocket Hole Joinery  |  Standard 4" Toe Kick</Text>
             </View>
 
-            <Text style={styles.sectionHeader}>PARTS ({baseParts.length} pieces)</Text>
+            <Text style={styles.sectionHeader}>PARTS ({baseParts.length} pieces — doors included)</Text>
             {baseParts.map(p => <PartRow key={p.id} part={p} />)}
-
-            <Text style={styles.sectionHeader}>SINGLE DOOR</Text>
-            <View style={styles.infoCard}>
-              <InfoRow label="Door width"  value={fmt(baseDoor.width)} />
-              <InfoRow label="Door height" value={fmt(baseDoor.height)} />
-            </View>
           </>
         )}
 
@@ -209,15 +185,8 @@ export default function CalculatorDemoScreen() {
               <Text style={styles.configDetail}>Pocket Hole Joinery  |  No Toe Kick</Text>
             </View>
 
-            <Text style={styles.sectionHeader}>PARTS ({wallParts.length} pieces)</Text>
+            <Text style={styles.sectionHeader}>PARTS ({wallParts.length} pieces — doors included)</Text>
             {wallParts.map(p => <PartRow key={p.id} part={p} />)}
-
-            <Text style={styles.sectionHeader}>DOUBLE DOORS</Text>
-            <View style={styles.infoCard}>
-              <InfoRow label="Left door width"  value={fmt(wallDoors.leftWidth)} />
-              <InfoRow label="Right door width" value={fmt(wallDoors.rightWidth)} />
-              <InfoRow label="Door height"      value={fmt(wallDoors.height)} />
-            </View>
           </>
         )}
 
@@ -232,7 +201,7 @@ export default function CalculatorDemoScreen() {
               </Text>
             </View>
 
-            <Text style={styles.sectionHeader}>PARTS ({drawerParts.length} pieces)</Text>
+            <Text style={styles.sectionHeader}>PARTS ({drawerParts.length} pieces — face included)</Text>
             {drawerParts.map(p => <PartRow key={p.id} part={p} />)}
           </>
         )}

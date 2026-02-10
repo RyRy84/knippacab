@@ -51,6 +51,22 @@ describe('assignGrainDirection', () => {
     expect(assignGrainDirection('Toe Kick')).toBe('horizontal');
   });
 
+  test('Door → vertical', () => {
+    expect(assignGrainDirection('Door')).toBe('vertical');
+  });
+
+  test('Door Left → vertical', () => {
+    expect(assignGrainDirection('Door Left')).toBe('vertical');
+  });
+
+  test('Door Right → vertical', () => {
+    expect(assignGrainDirection('Door Right')).toBe('vertical');
+  });
+
+  test('Drawer Face → horizontal', () => {
+    expect(assignGrainDirection('Drawer Face')).toBe('horizontal');
+  });
+
   test('Back Panel → either', () => {
     expect(assignGrainDirection('Back Panel')).toBe('either');
   });

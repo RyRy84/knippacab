@@ -54,12 +54,15 @@
  *   (equivalent to C# enums), so the compiler catches missing cases.
  */
 
-import { Drawer, Part, DrawerCornerJoinery, DrawerBottomMethod } from '../types';
+import { Drawer, Part, DrawerCornerJoinery, DrawerBottomMethod, GrainDirection } from '../types';
 import {
   THICKNESS_1_2_INCH_MM,
+  THICKNESS_3_4_INCH_MM,
   DADO_DEPTH_MM,
+  DEFAULT_BOX_MATERIAL,
 } from '../constants/cabinetDefaults';
 import { assignGrainDirection } from './grainLogic';
+import { calculateDrawerFaceDims } from './revealCalculator';
 
 // =============================================================================
 // TYPES
@@ -129,6 +132,31 @@ export function calculateDrawerParts(drawer: Drawer): Part[] {
     addPart(part);
   }
 
+  // ─── DRAWER FACE PANEL ────────────────────────────────────────────────────
+  // The decorative face panel (visible when drawer is closed). Calculated from
+  // the drawer's internal box dimensions using standard reveal math.
+  // Grain direction follows aspect ratio: wide faces → horizontal, tall → vertical.
+  // TODO Phase 5: Allow per-drawer face material override.
+
+  const faceDims = calculateDrawerFaceDims(drawer.width, drawer.height);
+
+  // Wide drawer faces (width > 1.5× height) look better with horizontal grain.
+  // Tall or square faces get vertical grain like the cabinet doors.
+  const faceGrain: GrainDirection =
+    faceDims.width > faceDims.height * 1.5 ? 'horizontal' : 'vertical';
+
+  addPart({
+    partType: 'drawer_face',
+    name: 'Drawer Face',
+    width: faceDims.width,
+    height: faceDims.height,
+    thickness: THICKNESS_3_4_INCH_MM,
+    quantity: 1,
+    material: DEFAULT_BOX_MATERIAL,
+    grainDirection: faceGrain,
+    notes: 'Decorative face panel (visible when drawer is closed).',
+  });
+
   return parts;
 }
 
@@ -177,53 +205,58 @@ function calculateBaseDrawerDimensions(drawer: Drawer): PartInput[] {
 
   return [
     {
+      partType: 'drawer_front_inner' as const,
       name: 'Drawer Front',
       width: frontBackWidth,
       height: frontBackHeight,
       thickness,
       quantity: 1,
       material,
-      grainDirection: 'horizontal',
+      grainDirection: 'horizontal' as const,
       notes: 'Inner structural front (not the decorative face panel).',
     },
     {
+      partType: 'drawer_back' as const,
       name: 'Drawer Back',
       width: frontBackWidth,
       height: frontBackHeight,
       thickness,
       quantity: 1,
       material,
-      grainDirection: 'horizontal',
+      grainDirection: 'horizontal' as const,
       notes: '',
     },
     {
+      partType: 'drawer_side' as const,
       name: 'Drawer Left Side',
       width: sideWidth,
       height: sideHeight,
       thickness,
       quantity: 1,
       material,
-      grainDirection: 'vertical',
+      grainDirection: 'vertical' as const,
       notes: '',
     },
     {
+      partType: 'drawer_side' as const,
       name: 'Drawer Right Side',
       width: sideWidth,
       height: sideHeight,
       thickness,
       quantity: 1,
       material,
-      grainDirection: 'vertical',
+      grainDirection: 'vertical' as const,
       notes: '',
     },
     {
+      partType: 'drawer_bottom' as const,
       name: 'Drawer Bottom',
       width: bottomWidth,
       height: bottomDepth,
-      thickness: 6.35,           // 1/4" plywood or hardboard for drawer bottoms
+      thickness: 6.35,
       quantity: 1,
       material: '1/4" Plywood',
-      grainDirection: 'either',
+      grainDirection: 'either' as const,
       notes: 'Applied to underside of box.',
     },
   ];
@@ -310,13 +343,13 @@ export function adjustDrawerForJoinery(
     if (cornerJoinery === 'dado') {
       // Dado corner: sides have dadoes, front/back fit into them.
       // Dimension impact is minimal (same final box geometry), but add notes.
-      if (adjusted.name === 'Drawer Side') {
+      if (adjusted.partType === 'drawer_side') {
         adjusted = {
           ...adjusted,
           notes: `Cut ${CORNER_DADO_DEPTH_MM}mm dado × box_thickness wide across each end for front/back panels. ${adjusted.notes}`.trim(),
         };
       }
-      if (adjusted.name === 'Drawer Front' || adjusted.name === 'Drawer Back') {
+      if (adjusted.partType === 'drawer_front_inner' || adjusted.partType === 'drawer_back') {
         adjusted = {
           ...adjusted,
           notes: `Fits into ${CORNER_DADO_DEPTH_MM}mm dado groove in side panels. ${adjusted.notes}`.trim(),
@@ -329,7 +362,7 @@ export function adjustDrawerForJoinery(
     // ─── BOTTOM ATTACHMENT ADJUSTMENTS ──────────────────────────────────────
 
     if (bottomMethod === 'captured_dado') {
-      if (adjusted.name === 'Drawer Bottom') {
+      if (adjusted.partType === 'drawer_bottom') {
         // Bottom fits INSIDE the dado grooves. Each groove runs along the inside
         // face of the wall, BOTTOM_DADO_DEPTH_MM deep. The bottom panel dimensions
         // equal the internal box dimensions (groove to groove).
@@ -345,14 +378,14 @@ export function adjustDrawerForJoinery(
         };
       }
 
-      // Sides and front/back: height slightly shorter to leave room for the groove
-      if (adjusted.name === 'Drawer Side') {
+      // Sides and front/back: add note about groove to cut
+      if (adjusted.partType === 'drawer_side') {
         adjusted = {
           ...adjusted,
           notes: `Cut ${BOTTOM_DADO_DEPTH_MM}mm dado groove along bottom inside edge for captured bottom. ${adjusted.notes}`.trim(),
         };
       }
-      if (adjusted.name === 'Drawer Front' || adjusted.name === 'Drawer Back') {
+      if (adjusted.partType === 'drawer_front_inner' || adjusted.partType === 'drawer_back') {
         adjusted = {
           ...adjusted,
           notes: `Cut ${BOTTOM_DADO_DEPTH_MM}mm dado groove along bottom inside edge for captured bottom. ${adjusted.notes}`.trim(),
@@ -361,7 +394,7 @@ export function adjustDrawerForJoinery(
     }
 
     if (bottomMethod === 'screwed') {
-      if (adjusted.name === 'Drawer Bottom') {
+      if (adjusted.partType === 'drawer_bottom') {
         adjusted = {
           ...adjusted,
           notes: 'Screwed up into sides from below. Pre-drill pilot holes.',
@@ -370,7 +403,7 @@ export function adjustDrawerForJoinery(
     }
 
     if (bottomMethod === 'applied') {
-      if (adjusted.name === 'Drawer Bottom') {
+      if (adjusted.partType === 'drawer_bottom') {
         adjusted = {
           ...adjusted,
           notes: 'Applied to underside of assembled box. Nail or staple from below.',
