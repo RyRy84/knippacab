@@ -27,7 +27,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity,
-  ScrollView, StyleSheet, Alert,
+  ScrollView, StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -139,6 +139,7 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
   const [autoBalance, setAutoBalance]     = useState(false);
   const [cornerJoinery, setCornerJoinery] = useState<DrawerCornerJoinery>('pocket_hole');
   const [bottomMethod, setBottomMethod]   = useState<DrawerBottomMethod>('applied');
+  const [isSaving, setIsSaving]           = useState(false);
 
   // ── Sync heights when count changes or on first mount ──────────────────────
   // Sets a sensible initial distribution when the cabinet is loaded
@@ -194,9 +195,8 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
       return;
     }
 
-    // Minimum drawer height: 3 inches
+    // Validate heights before showing loading state
     const minHeightMm = inchesToMm(MIN_DRAWER_HEIGHT_IN);
-
     for (let i = 0; i < drawerCount; i++) {
       const h = heightsMm[i];
       if (h === null || h < minHeightMm) {
@@ -209,7 +209,7 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
     }
 
     const totalUsedMm = sumHeightsMm(heightsMm.slice(0, drawerCount));
-    if (totalUsedMm > cabinet.height + 0.5) { // 0.5mm tolerance
+    if (totalUsedMm > cabinet.height + 0.5) {
       Alert.alert(
         'Heights Exceed Cabinet',
         `Total drawer height (${formatForDisplay(totalUsedMm, units)}) exceeds cabinet height (${formatForDisplay(cabinet.height, units)}).` +
@@ -218,20 +218,21 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
       return;
     }
 
-    // Save each drawer to the store
-    for (let i = 0; i < drawerCount; i++) {
-      const openingHeightMm = heightsMm[i]!;
-      addDrawer(cabinetId, {
-        // Subtract clearances so the box fits inside the opening
-        width:  cabinet.width  - (2 * DRAWER_SLIDE_CLEARANCE_EACH_SIDE_MM),
-        height: Math.max(1, openingHeightMm - DRAWER_TOP_CLEARANCE_MM),
-        depth:  Math.max(1, cabinet.depth   - DRAWER_BOX_DEPTH_SETBACK_MM),
-        cornerJoinery,
-        bottomMethod,
-      });
-    }
-
-    navigation.goBack();
+    // Show loading state, yield to render cycle, then write + navigate
+    setIsSaving(true);
+    setTimeout(() => {
+      for (let i = 0; i < drawerCount; i++) {
+        const openingHeightMm = heightsMm[i]!;
+        addDrawer(cabinetId, {
+          width:  cabinet.width  - (2 * DRAWER_SLIDE_CLEARANCE_EACH_SIDE_MM),
+          height: Math.max(1, openingHeightMm - DRAWER_TOP_CLEARANCE_MM),
+          depth:  Math.max(1, cabinet.depth   - DRAWER_BOX_DEPTH_SETBACK_MM),
+          cornerJoinery,
+          bottomMethod,
+        });
+      }
+      navigation.goBack();
+    }, 0);
   }
 
   // ── Derived display values ─────────────────────────────────────────────────
@@ -391,10 +392,17 @@ export default function DrawerBuilderScreen({ navigation, route }: Props) {
       ))}
 
       {/* ── Action buttons ──────────────────────────────────────────────── */}
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-        <Text style={styles.saveBtnText}>
-          Add {drawerCount === 1 ? 'Drawer' : `${drawerCount} Drawers`} to Cabinet
-        </Text>
+      <TouchableOpacity
+        style={[styles.saveBtn, isSaving && styles.saveBtnSaving]}
+        onPress={handleSave}
+        disabled={isSaving}
+      >
+        {isSaving
+          ? <ActivityIndicator color="#FFFFFF" />
+          : <Text style={styles.saveBtnText}>
+              Add {drawerCount === 1 ? 'Drawer' : `${drawerCount} Drawers`} to Cabinet
+            </Text>
+        }
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
@@ -648,6 +656,9 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     marginTop: 28,
+  },
+  saveBtnSaving: {
+    backgroundColor: '#CE93D8',
   },
   saveBtnText: {
     fontSize: 16,

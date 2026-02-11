@@ -87,6 +87,13 @@ function CabinetCard({
         <View style={[styles.typeBadge, { backgroundColor: TYPE_BADGE_COLORS[cabinet.type] }]}>
           <Text style={styles.typeBadgeText}>{TYPE_LABELS[cabinet.type]}</Text>
         </View>
+        {drawerCount > 0 && (
+          <View style={styles.drawerBadge}>
+            <Text style={styles.drawerBadgeText}>
+              {drawerCount} {drawerCount === 1 ? 'drawer' : 'drawers'}
+            </Text>
+          </View>
+        )}
         <View style={styles.cardHeaderSpacer} />
         <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
           <Text style={styles.editBtnText}>Edit</Text>
@@ -112,16 +119,11 @@ function CabinetCard({
           {toeKickLabel}
         </Text>
       )}
-      {drawerCount > 0 && (
-        <Text style={styles.cardDetail}>
-          <Text style={styles.cardDetailLabel}>Drawers: </Text>
-          {drawerCount} {drawerCount === 1 ? 'drawer' : 'drawers'}
-        </Text>
-      )}
-
-      {/* ── Add Drawers link ──────────────────────────────────────────── */}
+      {/* ── Add / Edit Drawers link ───────────────────────────────────── */}
       <TouchableOpacity style={styles.addDrawersBtn} onPress={onAddDrawers}>
-        <Text style={styles.addDrawersBtnText}>+ Add Drawers</Text>
+        <Text style={styles.addDrawersBtnText}>
+          {drawerCount > 0 ? `+ Add More Drawers` : '+ Add Drawers'}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -336,6 +338,21 @@ const styles = StyleSheet.create({
   },
   cardHeaderSpacer: {
     flex: 1,
+  },
+  drawerBadge: {
+    backgroundColor: '#F3E5F5',
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    marginLeft: 6,
+    borderWidth: 1,
+    borderColor: '#CE93D8',
+  },
+  drawerBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6A1B9A',
+    letterSpacing: 0.2,
   },
   editBtn: {
     paddingHorizontal: 10,

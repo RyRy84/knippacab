@@ -12,7 +12,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity,
-  ScrollView, StyleSheet, Alert,
+  ScrollView, StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -26,7 +26,23 @@ import {
   WALL_CABINET_HEIGHT_MM, WALL_CABINET_DEPTH_MM,
   TALL_CABINET_HEIGHT_MM, TALL_CABINET_DEPTH_MM,
   STANDARD_TOE_KICK_HEIGHT_MM,
+  STANDARD_CABINET_WIDTHS_MM,
 } from '../constants/cabinetDefaults';
+
+// =============================================================================
+// PRESET WIDTHS
+// =============================================================================
+
+/**
+ * Maps the STANDARD_CABINET_WIDTHS_MM array to { mm, imperialLabel } pairs.
+ * Used to render the quick-select preset buttons in the Width section.
+ * Defined outside the component so it's never recreated on re-render.
+ */
+const IMPERIAL_INCH_LABELS = ['9"', '12"', '15"', '18"', '21"', '24"', '27"', '30"', '33"', '36"', '39"', '42"', '48"'];
+const PRESET_WIDTHS = STANDARD_CABINET_WIDTHS_MM.map((mm, i) => ({
+  mm,
+  imperialLabel: IMPERIAL_INCH_LABELS[i],
+}));
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'CabinetBuilder'>;
@@ -104,6 +120,7 @@ export default function CabinetBuilderScreen({ navigation, route }: Props) {
   const [customToeKickMm, setCustomToeKickMm] = useState<number | null>(
     existingCabinet?.toeKickHeight ?? STANDARD_TOE_KICK_HEIGHT_MM
   );
+  const [isSaving, setIsSaving] = useState(false);
 
   function handleSave() {
     if (!currentProject) {
@@ -117,40 +134,43 @@ export default function CabinetBuilderScreen({ navigation, route }: Props) {
       return;
     }
 
-    const defaults = TYPE_DEFAULTS[cabinetType];
+    // Show loading state, then yield to the render cycle so the spinner
+    // is visible before the synchronous DB write + navigation happen.
+    setIsSaving(true);
+    setTimeout(() => {
+      const defaults = TYPE_DEFAULTS[cabinetType];
 
-    let toeKickHeightMm = 0;
-    if (toeKickOption === 'standard') {
-      toeKickHeightMm = STANDARD_TOE_KICK_HEIGHT_MM;
-    } else if (toeKickOption === 'custom') {
-      toeKickHeightMm = customToeKickMm ?? STANDARD_TOE_KICK_HEIGHT_MM;
-    }
+      let toeKickHeightMm = 0;
+      if (toeKickOption === 'standard') {
+        toeKickHeightMm = STANDARD_TOE_KICK_HEIGHT_MM;
+      } else if (toeKickOption === 'custom') {
+        toeKickHeightMm = customToeKickMm ?? STANDARD_TOE_KICK_HEIGHT_MM;
+      }
 
-    if (isEditMode && cabinetId) {
-      // Edit mode — update the existing cabinet
-      updateCabinet(cabinetId, {
-        type: cabinetType,
-        width: widthMm,
-        height: defaults.heightMm,
-        depth: defaults.depthMm,
-        toeKickOption,
-        toeKickHeight: toeKickHeightMm,
-        joineryMethod,
-      });
-    } else {
-      // Create mode — add a new cabinet
-      addCabinet({
-        type: cabinetType,
-        width: widthMm,
-        height: defaults.heightMm,
-        depth: defaults.depthMm,
-        toeKickOption,
-        toeKickHeight: toeKickHeightMm,
-        joineryMethod,
-      });
-    }
+      if (isEditMode && cabinetId) {
+        updateCabinet(cabinetId, {
+          type: cabinetType,
+          width: widthMm,
+          height: defaults.heightMm,
+          depth: defaults.depthMm,
+          toeKickOption,
+          toeKickHeight: toeKickHeightMm,
+          joineryMethod,
+        });
+      } else {
+        addCabinet({
+          type: cabinetType,
+          width: widthMm,
+          height: defaults.heightMm,
+          depth: defaults.depthMm,
+          toeKickOption,
+          toeKickHeight: toeKickHeightMm,
+          joineryMethod,
+        });
+      }
 
-    navigation.goBack();
+      navigation.goBack();
+    }, 0);
   }
 
   const defaults = TYPE_DEFAULTS[cabinetType];
@@ -191,13 +211,33 @@ export default function CabinetBuilderScreen({ navigation, route }: Props) {
         onChangeValue={setWidthMm}
         units={units}
         minMm={inchesToMm(3)}
-        hint={
-          units === 'imperial'
-            ? 'Standard sizes: 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 42, 48"'
-            : 'Standard sizes: 229, 305, 381, 457, 533, 610, 686, 762, 838, 914 mm'
-        }
+        hint="Tap a preset below or type a custom size"
         containerStyle={styles.measurementInputSpacing}
       />
+
+      {/* ── Preset width quick-select ────────────────────────────────────── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.presetRow}
+        contentContainerStyle={styles.presetRowContent}
+      >
+        {PRESET_WIDTHS.map(({ mm, imperialLabel }) => {
+          const isActive = widthMm !== null && Math.abs(widthMm - mm) < 0.5;
+          const label = units === 'imperial' ? imperialLabel : `${mm}`;
+          return (
+            <TouchableOpacity
+              key={mm}
+              style={[styles.presetBtn, isActive && styles.presetBtnActive]}
+              onPress={() => setWidthMm(mm)}
+            >
+              <Text style={[styles.presetBtnText, isActive && styles.presetBtnTextActive]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
 
       {/* ── Defaults Info ───────────────────────────────────────────────── */}
       <View style={styles.defaultsCard}>
@@ -256,8 +296,15 @@ export default function CabinetBuilderScreen({ navigation, route }: Props) {
       </View>
 
       {/* ── Action Buttons ──────────────────────────────────────────────── */}
-      <TouchableOpacity style={styles.addBtn} onPress={handleSave}>
-        <Text style={styles.addBtnText}>{isEditMode ? 'Save Changes' : 'Add Cabinet'}</Text>
+      <TouchableOpacity
+        style={[styles.addBtn, isSaving && styles.addBtnSaving]}
+        onPress={handleSave}
+        disabled={isSaving}
+      >
+        {isSaving
+          ? <ActivityIndicator color="#FFFFFF" />
+          : <Text style={styles.addBtnText}>{isEditMode ? 'Save Changes' : 'Add Cabinet'}</Text>
+        }
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
@@ -414,6 +461,36 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
+  // Preset width buttons
+  presetRow: {
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  presetRowContent: {
+    gap: 6,
+    paddingVertical: 2,
+  },
+  presetBtn: {
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
+  },
+  presetBtnActive: {
+    borderColor: '#1565C0',
+    backgroundColor: '#1565C0',
+  },
+  presetBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#616161',
+  },
+  presetBtnTextActive: {
+    color: '#FFFFFF',
+  },
+
   // Action buttons
   addBtn: {
     backgroundColor: '#1565C0',
@@ -421,6 +498,9 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
     marginTop: 28,
+  },
+  addBtnSaving: {
+    backgroundColor: '#90CAF9',
   },
   addBtnText: {
     fontSize: 16,
