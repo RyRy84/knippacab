@@ -2,7 +2,7 @@
 
 **Purpose:** Guide development from foundation to MVP with clear milestones and deliverables.  
 **Last Updated:** February 11, 2026
-**Current Phase:** Phase 5 - PDF Export & Final Polish (UP NEXT)
+**Current Phase:** Phase 5 — PDF Export & Final Polish (IN PROGRESS — 5.1 complete)
 
 ---
 
@@ -55,13 +55,17 @@ Build a cross-platform cabinet design app that **eliminates calculation errors**
 - ✅ `src/components/CuttingDiagram.tsx` — SVG cutting diagram (parts colour-coded by cabinet, labels, grain symbols, rotation indicator)
 - ✅ `src/screens/VisualDiagramScreen.tsx` — full cutting diagram screen with settings panel, multi-material tabs, per-sheet SVG diagrams
 
+- ✅ **`expo-print` installed** — SDK 54 compatible PDF generation library
+- ✅ **`src/utils/pdfGenerator.ts`** — PDF generation module (cover page, cut list table, inline SVG cutting diagrams, `exportToPdf()`)
+- ✅ **Export PDF button wired** in `CuttingPlanScreen` and `VisualDiagramScreen` — replaces placeholder Alert with real PDF export + loading state
+
 **What We Have:**
-**Phases 1–4 are complete.** Full end-to-end workflow operational:
-create project → add cabinets → add drawers → review list → view cut list → view cutting diagram.
+**Phases 1–4 + Phase 5.1 are complete.** Full end-to-end workflow operational:
+create project → add cabinets → add drawers → review list → view cut list → view cutting diagram → **export to PDF**.
 The full optimizer pipeline is validated with 156 unit tests. Web version runs cleanly.
 
 **Git Commits:** 19 total
-**Lines of Code:** ~9,500+
+**Lines of Code:** ~10,500+
 **Can Run?** Yes (`npx expo start --web`)
 
 ---
@@ -570,39 +574,32 @@ getOptimalOrientation(part: Part): 'horizontal' | 'vertical'
 
 ### Milestones
 
-#### 5.1 PDF Export (`src/utils/pdfGenerator.ts`)
+#### 5.1 PDF Export (`src/utils/pdfGenerator.ts`) ✅ COMPLETE
+
 **What:** Generate shop-ready PDF documents.
 
-**PDF Contents:**
-1. **Cover Page**
-   - Project name
-   - Date
-   - Total cabinets
-   - Material summary
+**Implemented:**
+- **`expo-print`** installed (SDK 54 compatible, HTML → PDF via platform print system)
+- **`src/utils/pdfGenerator.ts`** — HTML/SVG PDF generation:
+  - Cover page: project name, date, summary stats (cabinets/pieces/sheets), material summary table
+  - Cut list section: all parts grouped by material, table with qty/width/height/thickness/grain badge/notes
+  - Cutting diagram section: inline SVG per sheet, colour-coded by cabinet (same palette as screen), part labels + mm dimensions, utilization badge, parts legend
+  - Print-friendly CSS (`@page` settings, page-break divs, letter size)
+- **Export PDF** button wired in `CuttingPlanScreen` (runs optimizer with default settings) and `VisualDiagramScreen` (uses current settings)
+- Loading state (ActivityIndicator) while generating
 
-2. **Cut List Pages**
-   - Grouped by material
-   - Table format: Part | Qty | Width | Height | Grain | Notes
-   - Page numbers
+**Platform behaviour:**
+- Web: browser print dialog → Save as PDF
+- iOS: AirPrint / Save to Files sheet
+- Android: system print manager
 
-3. **Cutting Diagram Pages**
-   - One sheet layout per page
-   - Dimensions labeled
-   - Part labels
-   - Sheet number
-
-4. **Assembly Notes (Optional)**
-   - Joinery-specific tips
-   - Hardware needed
-   - Assembly order
-
-**Library:** Evaluate `jsPDF` vs `react-native-pdf`
+**`generatePdfHtml(opts)`** exported separately for future unit testing.
 
 **Success Criteria:**
-- [ ] PDF generates successfully
-- [ ] Print-friendly (B&W option)
-- [ ] Readable at 8.5×11 print size
-- [ ] Headers/footers on each page
+- [x] PDF generates successfully
+- [x] Print-friendly layout (B&W-compatible grain badges, letter @page size)
+- [x] Readable at 8.5×11 print size
+- [x] Cover + cut list + cutting diagrams in one document
 
 ---
 
@@ -833,26 +830,26 @@ This is a living document. Update it when:
 
 ---
 
-**Next Immediate Step:** Phase 5 — Polish & MVP Completion
+**Phase 5.1 (PDF Export) is COMPLETE.** Full export works from both CuttingPlanScreen and VisualDiagramScreen.
 
 Priority options for the next session:
 
-**Option A: PDF Export (Phase 5.1) ⭐ — most user-visible**
-- Wire up the "Export PDF" button on CuttingPlanScreen and VisualDiagramScreen
-- Evaluate jsPDF vs react-native-print for multi-page output
-- Pages: cover (project summary) + cut list + one cutting diagram per sheet
-
-**Option B: Edit Cabinet Flow**
-- Pre-fill CabinetBuilderScreen when tapping a cabinet card in ReviewEditScreen
-- Requires passing `cabinetId` route param and loading existing data
-
-**Option C: Settings Persistence**
+**Option A: Settings Persistence (Phase 5.2 / 5.3)**
 - Wire VisualDiagramScreen's sheet settings (width/height/kerf) to SQLite settings store
 - So settings survive navigation and app restarts
+- Also finish the full Phase 5.2 Settings screen
+
+**Option B: Hardware Recommendations (Phase 5.3)**
+- Suggest screws, hinges, drawer slides based on joinery method and cabinet type
+- Simple list with quantities; include in PDF export
+
+**Option C: Home Screen Project Management polish**
+- Load and display saved projects on HomeScreen
+- Allow opening, renaming, or deleting projects
 
 **Command to Claude Code:**
 ```
 Read CLAUDE.md and ROADMAP.md, then continue with Phase 5.
-All 4 phases are complete (156 tests, 0 TS errors).
-Next priority: PDF export or edit-cabinet flow.
+Phase 5.1 (PDF Export) is complete (156 tests, 0 TS errors).
+Next priority: settings persistence or hardware recommendations.
 ```

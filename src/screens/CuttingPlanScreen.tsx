@@ -20,10 +20,10 @@
  * See CLAUDE.md "Known Web Gotchas" — object-literal selectors crash on web.
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Alert,
+  StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -32,6 +32,9 @@ import { Part, MeasurementUnit, GrainDirection } from '../types';
 import { calculateCabinetParts } from '../utils/cabinetCalculator';
 import { calculateDrawerParts } from '../utils/drawerCalculator';
 import { formatForDisplay } from '../utils/unitConversion';
+import { optimizeSheetCutting } from '../utils/optimizer/binPacking';
+import { DEFAULT_SHEET_SETTINGS } from '../utils/optimizer/types';
+import { exportToPdf } from '../utils/pdfGenerator';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'CuttingPlan'>;
@@ -174,6 +177,8 @@ export default function CuttingPlanScreen({ navigation }: Props) {
 
   const units: MeasurementUnit = currentProject?.units ?? 'imperial';
 
+  const [isExporting, setIsExporting] = useState(false);
+
   // ── Collect all parts from all cabinets + drawers ──────────────────────
   // useMemo so we don't recalculate on every render.
   const allParts: Part[] = useMemo(() => {
@@ -210,12 +215,43 @@ export default function CuttingPlanScreen({ navigation }: Props) {
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────
-  function handleExport() {
-    Alert.alert(
-      'Export Coming Soon',
-      'PDF and CSV export will be available in a future update. Your cut list data is ready — this button will wire up to the exporter once it is built.',
-      [{ text: 'OK' }]
-    );
+
+  /**
+   * Run the sheet optimizer with default settings and export a full PDF.
+   * (VisualDiagramScreen lets users customise settings; from here we use
+   * defaults so the cut list screen can export without extra navigation.)
+   */
+  async function handleExport() {
+    if (!currentProject || allParts.length === 0) {
+      Alert.alert('Nothing to Export', 'Add cabinets to the project first.');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Group parts by material and run the optimizer for each group.
+      const optimizationResults = new Map(
+        Array.from(partsByMaterial.entries()).map(([mat, parts]) => [
+          mat,
+          optimizeSheetCutting(parts, DEFAULT_SHEET_SETTINGS),
+        ])
+      );
+
+      await exportToPdf({
+        projectName: currentProject.name,
+        units,
+        cabinetCount: cabinets.length,
+        drawerCount: drawers.length,
+        allParts,
+        optimizationResults,
+        settings: DEFAULT_SHEET_SETTINGS,
+      });
+    } catch (err) {
+      // User cancelled the print dialog — not a real error worth reporting.
+      if (__DEV__) console.warn('PDF export cancelled or failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   // ==========================================================================
@@ -280,8 +316,16 @@ export default function CuttingPlanScreen({ navigation }: Props) {
           <Text style={styles.diagramBtnText}>View Cutting Diagram</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
-          <Text style={styles.exportBtnText}>Export PDF</Text>
+        <TouchableOpacity
+          style={[styles.exportBtn, isExporting && styles.exportBtnDisabled]}
+          onPress={handleExport}
+          disabled={isExporting}
+        >
+          {isExporting ? (
+            <ActivityIndicator size="small" color="#2E7D32" />
+          ) : (
+            <Text style={styles.exportBtnText}>Export PDF</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -487,5 +531,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#2E7D32',
+  },
+  exportBtnDisabled: {
+    opacity: 0.5,
   },
 });

@@ -30,7 +30,7 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Alert, LayoutChangeEvent,
+  StyleSheet, Alert, LayoutChangeEvent, ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
@@ -47,6 +47,7 @@ import { Part, MeasurementUnit } from '../types';
 import { formatForDisplay } from '../utils/unitConversion';
 import CuttingDiagram from '../components/CuttingDiagram';
 import MeasurementInput from '../components/MeasurementInput';
+import { exportToPdf } from '../utils/pdfGenerator';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'VisualDiagram'>;
@@ -181,13 +182,33 @@ export default function VisualDiagramScreen({ navigation }: Props) {
     return { totalSheets, totalParts, utilization };
   }, [optimizationResults]);
 
+  // ── Export state ──────────────────────────────────────────────────────
+  const [isExporting, setIsExporting] = useState(false);
+
   // ── Handlers ─────────────────────────────────────────────────────────
-  function handleExport() {
-    Alert.alert(
-      'Export Coming Soon',
-      'PDF export with cutting diagrams will be available in a future update.',
-      [{ text: 'OK' }]
-    );
+  async function handleExport() {
+    if (!currentProject || allParts.length === 0) {
+      Alert.alert('Nothing to Export', 'Add cabinets to the project first.');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      await exportToPdf({
+        projectName: currentProject.name,
+        units,
+        cabinetCount: cabinets.length,
+        drawerCount: drawers.length,
+        allParts,
+        optimizationResults,
+        settings,
+      });
+    } catch (err) {
+      // User cancelled the print dialog — not a real error worth reporting.
+      if (__DEV__) console.warn('PDF export cancelled or failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
   }
 
   // ==========================================================================
@@ -394,8 +415,16 @@ export default function VisualDiagramScreen({ navigation }: Props) {
 
       {/* ── Footer ─────────────────────────────────────────────────────── */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
-          <Text style={styles.exportBtnText}>Export PDF</Text>
+        <TouchableOpacity
+          style={[styles.exportBtn, isExporting && styles.exportBtnDisabled]}
+          onPress={handleExport}
+          disabled={isExporting}
+        >
+          {isExporting ? (
+            <ActivityIndicator size="small" color="#1565C0" />
+          ) : (
+            <Text style={styles.exportBtnText}>Export PDF</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -694,6 +723,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#1565C0',
+  },
+  exportBtnDisabled: {
+    opacity: 0.5,
   },
   exportBtnText: {
     fontSize: 15,

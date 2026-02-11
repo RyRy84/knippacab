@@ -5,7 +5,7 @@
 
 ---
 
-## Current State: Phases 1–4 + Path A COMPLETE ✅
+## Current State: Phases 1–4 + Path A + Phase 5.1 COMPLETE ✅
 
 Phases 1–4 are fully implemented. The full end-to-end workflow is operational:
 
@@ -51,6 +51,17 @@ Create project → Add cabinets → Add drawers → Review list
 - **`src/screens/VisualDiagramScreen.tsx`** — settings panel (sheet size, kerf), material tabs, per-sheet SVG cards, utilization stats, oversized-parts warning
 - 17 optimizer unit tests (bounds, no overlaps, grain constraints, multi-sheet, oversized, kerf)
 
+### Phase 5.1: PDF Export ✅
+- **`src/utils/optimizer/types.ts`** — `OptimizationSettings`, `ExpandedPart`, `PlacedPart`, `SheetLayout`, `OptimizationResult`
+- **`src/utils/optimizer/binPacking.ts`** — Guillotine BSSF (Best-Short-Side-Fit) algorithm with grain constraints, multi-sheet, kerf accounting
+- **`src/components/CuttingDiagram.tsx`** — SVG diagram: cabinet colour-coded parts, grain symbols, rotation indicators, 3-tier label density
+- **`src/screens/VisualDiagramScreen.tsx`** — settings panel (sheet size, kerf), material tabs, per-sheet SVG cards, utilization stats, oversized-parts warning
+- 17 optimizer unit tests (bounds, no overlaps, grain constraints, multi-sheet, oversized, kerf)
+
+- **`expo-print`** installed (SDK 54 compatible)
+- **`src/utils/pdfGenerator.ts`** — HTML/SVG PDF generation: cover page, cut list table, inline SVG cutting diagrams, `exportToPdf()` via expo-print
+- **Export PDF button** wired in `CuttingPlanScreen` and `VisualDiagramScreen` (loading state, error handling)
+
 **Total tests:** 156 passing
 
 ---
@@ -69,18 +80,16 @@ Create project → Add cabinets → Add drawers → Review list
 
 ---
 
-### Phase 5: PDF Export & Final Polish (Next Major Phase)
+### Phase 5: PDF Export & Final Polish
 
-**Goal:** Allow users to export cut lists and cutting diagrams to PDF for use in the shop.
+**Phase 5.1 COMPLETE.** Full PDF export (cover + cut list + cutting diagrams) works from both screens.
 
-**Milestones:**
-1. **5.1 — PDF Cut List** — export the material-grouped part list as a printable PDF
-2. **5.2 — PDF Cutting Diagram** — embed the SVG cutting diagrams in the PDF
-3. **5.3 — Final Polish** — loading states, error handling, app icon, splash screen, store assets
+**Remaining Phase 5 milestones:**
+1. **5.2 — Settings Persistence** — wire VisualDiagramScreen sheet settings to SQLite; build a dedicated Settings screen
+2. **5.3 — Hardware Recommendations** — suggest screws/hinges/slides based on joinery; include in PDF
+3. **5.4 — Final Polish** — app icon, splash screen, store assets, comprehensive error handling
 
-**Tech:** Evaluate `jsPDF` (web-compatible) vs `react-native-pdf-lib`. jsPDF is the likely choice for cross-platform.
-
-**Entry point:** The "Export PDF" button in CuttingPlanScreen currently shows a placeholder alert — wire this up to the PDF generator.
+**Entry point:** Start with `ROADMAP.md` Phase 5.2/5.3 milestones.
 
 ---
 

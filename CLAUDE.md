@@ -14,7 +14,7 @@ KnippaCab is a cross-platform cabinet design app built with **React Native + Exp
 - **State Management:** Zustand (lightweight, similar to simple Redux)
 - **Local Database:** SQLite (expo-sqlite)
 - **2D Graphics:** React Native SVG (for cutting diagrams)
-- **PDF Export:** jsPDF or react-native-pdf (evaluate during development)
+- **PDF Export:** `expo-print` (HTML → PDF via platform print system; works on web/iOS/Android)
 - **Units:** All internal math in millimeters; display converts to user preference (Imperial/Metric)
 
 ## Project Structure
@@ -474,7 +474,7 @@ box depth  = cabinet.depth  − 50.8mm front setback
 - Material section headers (e.g., `3/4" Plywood` with a "N pcs" badge)
 - Part cards per section: name (left), W × H dimensions, optional joinery notes; grain direction badge (right) with coloured border/arrow — blue=vertical, green=horizontal, orange=either
 - Quantity badge (× N) when a part has quantity > 1
-- Fixed footer: "View Cutting Diagram" (→ VisualDiagram) + "Export PDF" (placeholder alert)
+- Fixed footer: "View Cutting Diagram" (→ VisualDiagram) + "Export PDF" (wired to `exportToPdf()` — runs optimizer with `DEFAULT_SHEET_SETTINGS`; ActivityIndicator during generation)
 
 **Key patterns:**
 - `useMemo` for the parts calculation and material-group Map (avoid recalc on every render)
@@ -561,7 +561,7 @@ Three new functions added for the MeasurementInput component:
 
 ---
 
-### `src/__tests__/` — Unit Test Suites (156 tests, all passing)
+### `src/__tests__/` — Unit Test Suites (156 tests, all passing — Phase 5.1 has no new tests; `generatePdfHtml` is testable without a device)
 
 | File | Describes | Tests |
 |------|-----------|-------|
@@ -672,4 +672,49 @@ const [width, setWidth] = useState(0);
 - Material tabs (only shown when > 1 material, e.g. 3/4" + 1/4" plywood)
 - Per-sheet cards: header (sheet N of M + utilization badge), SVG diagram, part list
 - Warning card if any parts are too large for the sheet
-- Footer: Export PDF placeholder button
+- Footer: **Export PDF button** — wired to `exportToPdf()` with current settings; shows ActivityIndicator while generating
+
+---
+
+### Phase 5.1 — PDF Export (COMPLETE)
+
+#### `src/utils/pdfGenerator.ts` — PDF Generation Module
+
+**Purpose:** Generates a shop-ready, print-friendly PDF from project data using `expo-print`.
+
+**Platform behaviour:**
+- **Web:** browser print dialog → Save as PDF
+- **iOS:** AirPrint / Save to Files sheet
+- **Android:** system print manager
+
+**Public API:**
+
+| Export | Signature | Description |
+|--------|-----------|-------------|
+| `PdfExportOptions` | interface | Input options for PDF generation |
+| `generatePdfHtml(opts)` | `string` | Returns full HTML document (testable without device) |
+| `exportToPdf(opts)` | `Promise<void>` | Generates HTML and calls `Print.printAsync()` |
+
+**`PdfExportOptions` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `projectName` | `string` | Cover page title |
+| `units` | `MeasurementUnit` | Display units throughout |
+| `cabinetCount` | `number` | Shown in cover summary |
+| `drawerCount` | `number` | Shown in cover summary |
+| `allParts` | `Part[]` | All parts from all cabinets + drawers |
+| `optimizationResults` | `Map<string, OptimizationResult>` | Keyed by material name |
+| `settings` | `OptimizationSettings` | Sheet size + kerf used in diagrams |
+
+**PDF document structure:**
+1. **Cover page** — project name, date, summary cards (cabinets/pieces/sheets), material summary table, sheet settings footnote
+2. **Cut list** — per-material sections; table with Part Name/Notes | Qty | Width | Height | Thickness | Grain badge
+3. **Cutting diagrams** — one section per material; inline SVG per sheet (same colour scheme as CuttingDiagram.tsx); parts legend table; oversized-parts warning if applicable
+
+**SVG generation (`sheetToSvg`):** Pure function — no React deps. Scales sheet to 540px wide, draws cabinet-coloured rectangles, 3-tier label density (fill only / name / name+dims).
+
+**Integration:**
+- `CuttingPlanScreen` — runs optimizer with `DEFAULT_SHEET_SETTINGS`, then calls `exportToPdf()`
+- `VisualDiagramScreen` — passes existing `optimizationResults` + user-customised `settings` to `exportToPdf()`
+- Both screens show `ActivityIndicator` while generating; silent cancel handling on user dismiss
