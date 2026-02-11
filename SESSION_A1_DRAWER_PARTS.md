@@ -1,13 +1,17 @@
 # Session A1: Add Drawer Parts to CuttingPlanScreen
 
+**Status: ✅ COMPLETE** — Implemented in commit `5dad451` (February 10, 2026) as part of Phase 4 completion. All changes below are already in the codebase.
+
 ## Goal
 Update CuttingPlanScreen to include drawer parts in the cut list alongside cabinet parts.
 
-## Current State
-- CuttingPlanScreen.tsx only shows cabinet parts
-- Uses `calculateCabinetParts()` to get parts from cabinets
-- Groups parts by material and displays them
-- Drawers exist in the database but their parts aren't shown
+## Actual State (as of Feb 10, 2026)
+- ✅ `calculateDrawerParts` imported in CuttingPlanScreen.tsx (line 33)
+- ✅ `drawers` read from projectStore with single-value selector (line 173)
+- ✅ `allParts` useMemo iterates both `cabinets` and `drawers` (lines 179–188)
+- ✅ `[cabinets, drawers]` dependency array (line 188)
+- ✅ Summary header shows drawer count alongside cabinet count (lines 234–235)
+- ✅ VisualDiagramScreen.tsx also includes drawer parts in optimizer input (lines 84, 118–119)
 
 ## What Needs to Change
 
@@ -57,16 +61,13 @@ const allParts: Part[] = useMemo(() => {
    - Should have correct grain direction badges
 
 ## Success Criteria
-- [ ] No TypeScript errors
-- [ ] Drawer parts appear in cut list
-- [ ] Parts are correctly grouped by material
-- [ ] Grain direction badges show correctly
-- [ ] Quantities are accurate
-- [ ] App doesn't crash when project has no drawers
-- [ ] App doesn't crash when project has no cabinets
+- [x] No TypeScript errors
+- [x] Drawer parts appear in cut list
+- [x] Parts are correctly grouped by material
+- [x] Grain direction badges show correctly
+- [x] Quantities are accurate
+- [x] App doesn't crash when project has no drawers
+- [x] App doesn't crash when project has no cabinets
 
-## Expected Result
-The cut list will now show ALL parts needed for the project - both cabinet parts and drawer parts, making it a complete cutting plan.
-
-## Estimated Time
-30 minutes
+## Result
+The cut list shows ALL parts needed for the project — cabinet parts and drawer parts — making it a complete cutting plan. Drawer grain direction was also corrected in the same commit (sides → vertical, bottom → either).

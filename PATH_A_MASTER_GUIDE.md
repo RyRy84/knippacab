@@ -1,42 +1,34 @@
 # Path A: Quick Wins - Master Guide
 
-**Created:** February 11, 2026  
-**For:** Claude Code implementation sessions  
-**Goal:** Build React Native skills with focused, achievable features before Phase 4
+**Created:** February 11, 2026
+**Last Updated:** February 11, 2026
+**For:** Claude Code implementation sessions
+**Goal:** UX improvements and polish features on top of the completed Phase 4 foundation
 
 ---
 
 ## Overview
 
-Path A consists of 3 progressively complex features that improve the app while teaching important React Native patterns. Complete them in order for the best learning experience.
+Path A consists of 3 progressively complex features that improve the app. Complete them in order for the best learning experience.
 
-**Total Time:** 3-5 hours  
-**Risk Level:** Low (won't break existing functionality)  
-**Value:** High (immediate UX improvements + skill building)
+**Note:** Phase 4 (sheet optimizer, visual cutting diagram) is **already complete** as of Feb 10, 2026. Path A focuses on UX completeness and polish before Phase 5 (PDF export).
+
+**Total Time:** 2.5–4 hours remaining (A1 already done)
+**Risk Level:** Low (won't break existing functionality)
+**Value:** High (immediate UX improvements)
 
 ---
 
-## Session A1: Add Drawer Parts to Cut List ⭐ START HERE
-**Time:** 30 minutes  
-**Complexity:** ⚫ Easy  
+## Session A1: Add Drawer Parts to Cut List ✅ COMPLETE
+**Completed:** February 10, 2026 (commit `5dad451`)
 **File:** SESSION_A1_DRAWER_PARTS.md
 
-**What You'll Learn:**
-- Combining data from multiple sources in React
-- useMemo for performance optimization
-- Array spreading and concatenation
-
-**What It Does:**
-Currently the cut list only shows cabinet parts. This adds drawer parts (fronts, backs, sides, bottoms) to complete the cutting plan.
-
-**Command for Claude Code:**
-```bash
-Read SESSION_A1_DRAWER_PARTS.md and implement the changes to add drawer parts to the cutting plan screen
-```
+**What Was Done:**
+CuttingPlanScreen and VisualDiagramScreen both include drawer parts (fronts, backs, sides, bottoms) in their parts lists. Drawer grain directions were also corrected in the same commit.
 
 ---
 
-## Session A2: Edit Cabinet Functionality ⭐ DO SECOND
+## Session A2: Edit Cabinet Functionality ⭐ START HERE
 **Time:** 1-2 hours  
 **Complexity:** ⚫⚫ Medium  
 **File:** SESSION_A2_EDIT_CABINET.md
@@ -84,16 +76,14 @@ Read SESSION_A3_VISUAL_POLISH.md and implement all three polish features: drawer
 
 ## After Path A is Complete
 
-Once you've completed all three sessions, you'll have:
-1. ✅ Complete cut list (cabinets + drawers)
+Once you've completed A2 and A3, you'll have:
+1. ✅ Complete cut list (cabinets + drawers) — done
 2. ✅ Full CRUD operations (create, read, update, delete)
 3. ✅ Professional UI polish
-4. ✅ Solid React Native fundamentals
+4. ✅ Phase 4 optimizer + visual diagram — already done
 
 **Then you're ready for:**
-- **Phase 4** (Sheet Optimizer) with confidence
-- **Phase 5** (PDF Export & Final Polish)
-- Or your own custom features!
+- **Phase 5** (PDF Export & Final Polish) — the last major milestone before V1 release
 
 ---
 
@@ -101,11 +91,11 @@ Once you've completed all three sessions, you'll have:
 
 After each session, verify:
 
-**A1 Checklist:**
-- [ ] Drawer parts appear in cut list
-- [ ] Parts grouped correctly by material
-- [ ] Grain badges show correct direction
-- [ ] No crashes with 0 drawers or 0 cabinets
+**A1 Checklist:** ✅ COMPLETE
+- [x] Drawer parts appear in cut list
+- [x] Parts grouped correctly by material
+- [x] Grain badges show correct direction
+- [x] No crashes with 0 drawers or 0 cabinets
 
 **A2 Checklist:**
 - [ ] Edit button appears on cabinet cards
@@ -149,9 +139,9 @@ After each session, verify:
 
 ## Next Steps After Path A
 
-When you're ready to tackle Phase 4 (the visual cutting diagram), WORK_PLAN.md has detailed implementation steps for:
-- Milestone 4.1: Bin packing algorithm
-- Milestone 4.2: SVG diagram rendering  
-- Milestone 4.3: Multi-sheet handling
+When A2 and A3 are complete, move to **Phase 5 (PDF Export & Final Polish)**:
+- PDF generation from the cut list and cutting diagrams
+- Hardware list / BOM export
+- Final app polish and store preparation
 
-But take your time with Path A first - these skills will make Phase 4 much easier!
+Phase 4 (bin packing, SVG diagram, multi-sheet) is fully complete — see CLAUDE.md for the full implementation details.
