@@ -1,25 +1,21 @@
 /**
- * CabinetBuilderScreen.tsx — Add a Cabinet to the Current Project
+ * CabinetBuilderScreen.tsx — Add or Edit a Cabinet
  *
- * Lets the user configure a single cabinet:
- *   - Type (Base / Wall / Tall)
- *   - Width in inches (required); height and depth default to type standards
- *   - Joinery method (defaults to project default)
- *   - Toe kick option (base cabinets only)
+ * Handles two modes:
+ *   - CREATE (no cabinetId in route params): configures a new cabinet and calls addCabinet()
+ *   - EDIT   (cabinetId passed via route params): pre-fills existing cabinet data
+ *             and calls updateCabinet() on save
  *
- * On submit, calls `addCabinet()` from the project store, which writes to
- * SQLite (native) or holds in memory (web), then navigates back to ReviewEdit.
- *
- * All user inputs are in inches; values are converted to mm before storage
- * using `inchesToMm()` from unitConversion.ts.
+ * All user inputs are in mm internally (MeasurementInput handles parsing/formatting).
  */
 
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
+  View, Text, TouchableOpacity,
   ScrollView, StyleSheet, Alert,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation/types';
 import { useProjectStore } from '../store/projectStore';
 import { CabinetType, JoineryMethod, ToeKickOption } from '../types';
@@ -34,6 +30,7 @@ import {
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'CabinetBuilder'>;
+  route: RouteProp<RootStackParamList, 'CabinetBuilder'>;
 };
 
 // =============================================================================
@@ -78,26 +75,37 @@ const TOE_KICK_OPTIONS: { value: ToeKickOption; label: string }[] = [
 // SCREEN
 // =============================================================================
 
-export default function CabinetBuilderScreen({ navigation }: Props) {
+export default function CabinetBuilderScreen({ navigation, route }: Props) {
   const currentProject = useProjectStore(s => s.currentProject);
+  const cabinets       = useProjectStore(s => s.cabinets);
   const addCabinet     = useProjectStore(s => s.addCabinet);
+  const updateCabinet  = useProjectStore(s => s.updateCabinet);
 
-  // Derive units from the current project (imperial is the default)
+  // Determine mode — cabinetId in route params means we're editing an existing cabinet
+  const cabinetId = route.params?.cabinetId;
+  const isEditMode = !!cabinetId;
+  const existingCabinet = isEditMode ? (cabinets.find(c => c.id === cabinetId) ?? null) : null;
+
   const units = currentProject?.units ?? 'imperial';
 
-  const [cabinetType, setCabinetType] = useState<CabinetType>('base');
-  // Width is now stored in mm — MeasurementInput handles all parsing/formatting
-  const [widthMm, setWidthMm]         = useState<number | null>(null);
-  const [joineryMethod, setJoineryMethod] = useState<JoineryMethod>(
-    currentProject?.defaultJoinery ?? 'pocket_hole'
+  // Pre-fill state from the existing cabinet when editing, otherwise use defaults
+  const [cabinetType, setCabinetType] = useState<CabinetType>(
+    existingCabinet?.type ?? 'base'
   );
-  const [toeKickOption, setToeKickOption] = useState<ToeKickOption>('standard');
-  // Custom toe kick is also mm now — separate MeasurementInput
+  const [widthMm, setWidthMm] = useState<number | null>(
+    existingCabinet?.width ?? null
+  );
+  const [joineryMethod, setJoineryMethod] = useState<JoineryMethod>(
+    existingCabinet?.joineryMethod ?? currentProject?.defaultJoinery ?? 'pocket_hole'
+  );
+  const [toeKickOption, setToeKickOption] = useState<ToeKickOption>(
+    existingCabinet?.toeKickOption ?? 'standard'
+  );
   const [customToeKickMm, setCustomToeKickMm] = useState<number | null>(
-    STANDARD_TOE_KICK_HEIGHT_MM  // default to 4" (102mm)
+    existingCabinet?.toeKickHeight ?? STANDARD_TOE_KICK_HEIGHT_MM
   );
 
-  function handleAdd() {
+  function handleSave() {
     if (!currentProject) {
       Alert.alert('No Project', 'Please create a project first.');
       navigation.navigate('ProjectSetup');
@@ -118,17 +126,31 @@ export default function CabinetBuilderScreen({ navigation }: Props) {
       toeKickHeightMm = customToeKickMm ?? STANDARD_TOE_KICK_HEIGHT_MM;
     }
 
-    addCabinet({
-      type: cabinetType,
-      width: widthMm,           // Already in mm — no conversion needed
-      height: defaults.heightMm,
-      depth: defaults.depthMm,
-      toeKickOption,
-      toeKickHeight: toeKickHeightMm,
-      joineryMethod,
-    });
+    if (isEditMode && cabinetId) {
+      // Edit mode — update the existing cabinet
+      updateCabinet(cabinetId, {
+        type: cabinetType,
+        width: widthMm,
+        height: defaults.heightMm,
+        depth: defaults.depthMm,
+        toeKickOption,
+        toeKickHeight: toeKickHeightMm,
+        joineryMethod,
+      });
+    } else {
+      // Create mode — add a new cabinet
+      addCabinet({
+        type: cabinetType,
+        width: widthMm,
+        height: defaults.heightMm,
+        depth: defaults.depthMm,
+        toeKickOption,
+        toeKickHeight: toeKickHeightMm,
+        joineryMethod,
+      });
+    }
 
-    navigation.goBack(); // return to ReviewEdit
+    navigation.goBack();
   }
 
   const defaults = TYPE_DEFAULTS[cabinetType];
@@ -234,8 +256,8 @@ export default function CabinetBuilderScreen({ navigation }: Props) {
       </View>
 
       {/* ── Action Buttons ──────────────────────────────────────────────── */}
-      <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
-        <Text style={styles.addBtnText}>Add Cabinet</Text>
+      <TouchableOpacity style={styles.addBtn} onPress={handleSave}>
+        <Text style={styles.addBtnText}>{isEditMode ? 'Save Changes' : 'Add Cabinet'}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>

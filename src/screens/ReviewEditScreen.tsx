@@ -58,6 +58,7 @@ function CabinetCard({
   index,
   units,
   onDelete,
+  onEdit,
   onAddDrawers,
   drawerCount,
 }: {
@@ -65,6 +66,7 @@ function CabinetCard({
   index: number;
   units: MeasurementUnit;
   onDelete: () => void;
+  onEdit: () => void;
   onAddDrawers: () => void;
   drawerCount: number;
 }) {
@@ -86,6 +88,9 @@ function CabinetCard({
           <Text style={styles.typeBadgeText}>{TYPE_LABELS[cabinet.type]}</Text>
         </View>
         <View style={styles.cardHeaderSpacer} />
+        <TouchableOpacity style={styles.editBtn} onPress={onEdit}>
+          <Text style={styles.editBtnText}>Edit</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.deleteBtn} onPress={onDelete}>
           <Text style={styles.deleteBtnText}>Delete</Text>
         </TouchableOpacity>
@@ -192,6 +197,7 @@ export default function ReviewEditScreen({ navigation }: Props) {
               index={index}
               units={units}
               onDelete={() => handleDelete(cabinet, index)}
+              onEdit={() => navigation.navigate('CabinetBuilder', { cabinetId: cabinet.id })}
               onAddDrawers={() => navigation.navigate('DrawerBuilder', { cabinetId: cabinet.id })}
               drawerCount={drawers.filter(d => d.cabinetId === cabinet.id).length}
             />
@@ -330,6 +336,19 @@ const styles = StyleSheet.create({
   },
   cardHeaderSpacer: {
     flex: 1,
+  },
+  editBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#1565C0',
+    marginRight: 6,
+  },
+  editBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1565C0',
   },
   deleteBtn: {
     paddingHorizontal: 10,
