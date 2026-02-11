@@ -5,7 +5,7 @@
 
 ---
 
-## Current State: Phase 4 COMPLETE ✅
+## Current State: Phases 1–4 + Path A COMPLETE ✅
 
 Phases 1–4 are fully implemented. The full end-to-end workflow is operational:
 
@@ -14,7 +14,7 @@ Create project → Add cabinets → Add drawers → Review list
   → Cut list (grouped by material) → Visual cutting diagram (SVG)
 ```
 
-**16 commits · ~9,000+ lines of code · 156 passing unit tests · Runs on web (`npx expo start --web`)**
+**19 commits · ~9,500+ lines of code · 156 passing unit tests · Runs on web (`npx expo start --web`)**
 
 ---
 
@@ -38,9 +38,9 @@ Create project → Add cabinets → Add drawers → Review list
 ### Phase 3: Core UI Screens ✅
 - **HomeScreen** — project list, create/open/delete
 - **ProjectSetupScreen** — name, units, default joinery
-- **CabinetBuilderScreen** — type selector, MeasurementInput width, toe kick, joinery; stores in mm
-- **ReviewEditScreen** — cabinet list with cards, delete, "Add Drawers" button, "Generate Cut List"
-- **DrawerBuilderScreen** — drawer count, per-drawer heights (MeasurementInput), auto-balance, corner joinery + bottom method
+- **CabinetBuilderScreen** — type selector, MeasurementInput width + preset buttons, toe kick, joinery; edit mode; loading state
+- **ReviewEditScreen** — cabinet cards with Edit/Delete/Add-Drawers, drawer count badge, "Generate Cut List"
+- **DrawerBuilderScreen** — drawer count, per-drawer heights (MeasurementInput), auto-balance, corner joinery + bottom method; loading state
 - **CuttingPlanScreen** — all parts (cabinets + drawers) grouped by material, grain badges, summary header
 - **MeasurementInput component** — fractional Imperial (`"36 1/2"`, `"3' 6"`) + Metric with parse/reformat
 
@@ -57,15 +57,15 @@ Create project → Add cabinets → Add drawers → Review list
 
 ## What's Next
 
-### Path A: UX Polish (In Progress)
+### Path A: UX Polish ✅ COMPLETE
 
-| Session | Feature | Status |
+| Session | Feature | Commit |
 |---------|---------|--------|
-| A1 | Drawer parts in cut list | ✅ COMPLETE (commit `5dad451`) |
-| A2 | Edit cabinet functionality | ⬅️ DO NEXT |
-| A3 | Visual polish (drawer badges, preset buttons, empty states) | Pending |
+| A1 | Drawer parts in cut list | `5dad451` |
+| A2 | Edit cabinet functionality | `04ced75` |
+| A3 | Drawer badges, preset buttons, loading states | `c308b97` |
 
-**See PATH_A_MASTER_GUIDE.md for session commands and checklists.**
+**Path A is fully complete. See PATH_A_MASTER_GUIDE.md for details.**
 
 ---
 
@@ -104,11 +104,15 @@ npx tsc --noEmit        # TypeScript type check
 
 ---
 
-## Key Files for Next Session (A2: Edit Cabinet)
+## Key Files for Phase 5 (PDF Export)
 
 ```
-src/screens/CabinetBuilderScreen.tsx   # Add edit mode (route param: existingCabinet?)
-src/screens/ReviewEditScreen.tsx        # Add "Edit" button to cabinet cards
-src/navigation/types.ts                 # Add optional cabinetId to CabinetBuilder route
-src/store/projectStore.ts               # Already has updateCabinet() action
+src/screens/CuttingPlanScreen.tsx      # "Export PDF" button → wire to PDF generator
+src/screens/VisualDiagramScreen.tsx    # "Export PDF" button → embed SVG diagrams
+src/utils/pdfExport.ts                 # NEW — PDF generation module (create this)
 ```
+
+**Recommended library:** `jsPDF` — web-compatible, no native build required.
+Install with: `npx expo install jspdf`
+
+**Phase 5 entry point:** The "Export PDF" buttons in CuttingPlanScreen and VisualDiagramScreen currently show `Alert.alert` placeholders. Wire those to the new `pdfExport.ts` module.

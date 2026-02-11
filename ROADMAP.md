@@ -1,8 +1,8 @@
 # KnippaCab Development Roadmap
 
 **Purpose:** Guide development from foundation to MVP with clear milestones and deliverables.  
-**Last Updated:** February 10, 2026
-**Current Phase:** Phase 4 - Sheet Goods Optimization (COMPLETE ✅)
+**Last Updated:** February 11, 2026
+**Current Phase:** Phase 5 - PDF Export & Final Polish (UP NEXT)
 
 ---
 
@@ -44,8 +44,8 @@ Build a cross-platform cabinet design app that **eliminates calculation errors**
 - ✅ Unit tests — 93 tests passing (cabinetCalculator, drawerCalculator, revealCalculator, grainLogic)
 - ✅ CalculatorDemoScreen — visual validation of calculation engine (3 tabs)
 - ✅ ProjectSetupScreen — functional form (name, units, joinery)
-- ✅ CabinetBuilderScreen — type selector, width input, toe kick, joinery
-- ✅ ReviewEditScreen — cabinet list with cards, delete, Add/Generate buttons
+- ✅ CabinetBuilderScreen — type selector, width + preset buttons, toe kick, joinery; edit mode; loading state
+- ✅ ReviewEditScreen — cabinet cards with Edit/Delete/drawer count badge, "Generate Cut List"
 
 - ✅ CuttingPlanScreen — functional cut list screen (parts grouped by material, grain direction badges, export placeholder)
 - ✅ DrawerBuilderScreen — drawer count stepper, per-drawer height inputs, auto-balance, corner joinery + bottom method selectors
@@ -60,8 +60,8 @@ Build a cross-platform cabinet design app that **eliminates calculation errors**
 create project → add cabinets → add drawers → review list → view cut list → view cutting diagram.
 The full optimizer pipeline is validated with 156 unit tests. Web version runs cleanly.
 
-**Git Commits:** 16 total
-**Lines of Code:** ~9,000+
+**Git Commits:** 19 total
+**Lines of Code:** ~9,500+
 **Can Run?** Yes (`npx expo start --web`)
 
 ---

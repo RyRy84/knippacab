@@ -2,6 +2,7 @@
 
 **Created:** February 11, 2026
 **Last Updated:** February 11, 2026
+**Status: ✅ PATH A COMPLETE**
 **For:** Claude Code implementation sessions
 **Goal:** UX improvements and polish features on top of the completed Phase 4 foundation
 
@@ -9,13 +10,9 @@
 
 ## Overview
 
-Path A consists of 3 progressively complex features that improve the app. Complete them in order for the best learning experience.
+All three Path A sessions are complete. The app now has full CRUD, complete cut lists, preset quick-entry, visual polish, and the Phase 4 optimizer.
 
-**Note:** Phase 4 (sheet optimizer, visual cutting diagram) is **already complete** as of Feb 10, 2026. Path A focuses on UX completeness and polish before Phase 5 (PDF export).
-
-**Total Time:** 2.5–4 hours remaining (A1 already done)
-**Risk Level:** Low (won't break existing functionality)
-**Value:** High (immediate UX improvements)
+**Next:** Phase 5 — PDF Export & Final Polish
 
 ---
 
@@ -28,62 +25,37 @@ CuttingPlanScreen and VisualDiagramScreen both include drawer parts (fronts, bac
 
 ---
 
-## Session A2: Edit Cabinet Functionality ⭐ START HERE
-**Time:** 1-2 hours  
-**Complexity:** ⚫⚫ Medium  
-**File:** SESSION_A2_EDIT_CABINET.md
+## Session A2: Edit Cabinet Functionality ✅ COMPLETE
+**Completed:** February 11, 2026 (commit `04ced75`)
+**File:** SESSION_A2_EDIT_CABINET.md (implemented directly — no session file needed)
 
-**What You'll Learn:**
-- Navigation route parameters
-- Conditional rendering (create vs edit mode)
-- Pre-filling forms with existing data
-- Update vs create patterns in state management
-
-**What It Does:**
-Users can currently only delete cabinets. This adds an Edit button that lets them modify existing cabinets without starting over.
-
-**Command for Claude Code:**
-```bash
-Read SESSION_A2_EDIT_CABINET.md and implement edit cabinet functionality with form pre-filling and update logic
-```
+**What Was Done:**
+- `navigation/types.ts`: `CabinetBuilder` route now accepts optional `cabinetId`
+- `CabinetBuilderScreen`: dual-mode (create / edit) — reads `route.params?.cabinetId`, pre-fills all 5 form fields from the existing cabinet, calls `updateCabinet()` in edit mode; button label changes to "Save Changes"
+- `ReviewEditScreen`: blue outlined **Edit** button added to each cabinet card header, navigates with `cabinetId`
 
 ---
 
-## Session A3: Visual Polish ⭐ DO THIRD
-**Time:** 1-2 hours  
-**Complexity:** ⚫ Easy to ⚫⚫ Medium  
-**File:** SESSION_A3_VISUAL_POLISH.md
+## Session A3: Visual Polish ✅ COMPLETE
+**Completed:** February 11, 2026 (commit `c308b97`)
+**File:** SESSION_A3_VISUAL_POLISH.md (implemented directly — no session file needed)
 
-**What You'll Learn:**
-- Component composition
-- Loading states and async operations
-- Better empty states
-- Inline validation feedback
-- Touch-friendly UI patterns
-
-**What It Does:**
-Three polish features:
-1. Drawer count badges on cabinet cards
-2. Preset size quick-select buttons
-3. Better empty states and loading indicators
-
-**Command for Claude Code:**
-```bash
-Read SESSION_A3_VISUAL_POLISH.md and implement all three polish features: drawer badges, preset buttons, and improved states
-```
+**What Was Done:**
+1. **Drawer count badge** — purple pill badge in each cabinet card header showing "N drawer(s)"; "Add Drawers" becomes "+ Add More Drawers" when drawers exist
+2. **Preset width buttons** — horizontal scrollable row of all 13 standard widths (9"–48") below the WIDTH input; active preset highlights; tapping sets `widthMm` directly
+3. **Loading state on save** — `ActivityIndicator` spinner replaces save button text while saving; `setTimeout(fn, 0)` yields to render cycle before synchronous DB write; button fades to lighter colour while disabled
 
 ---
 
-## After Path A is Complete
+## Path A Complete ✅
 
-Once you've completed A2 and A3, you'll have:
-1. ✅ Complete cut list (cabinets + drawers) — done
-2. ✅ Full CRUD operations (create, read, update, delete)
-3. ✅ Professional UI polish
-4. ✅ Phase 4 optimizer + visual diagram — already done
+All three sessions done. The app now has:
+1. ✅ Complete cut list (cabinets + drawers)
+2. ✅ Full CRUD operations (create, read, update, delete for cabinets)
+3. ✅ Professional UI polish (badges, preset buttons, loading states)
+4. ✅ Phase 4 optimizer + visual diagram
 
-**Then you're ready for:**
-- **Phase 5** (PDF Export & Final Polish) — the last major milestone before V1 release
+**Next:** Phase 5 (PDF Export & Final Polish) — the last major milestone before V1 release
 
 ---
 
@@ -97,17 +69,16 @@ After each session, verify:
 - [x] Grain badges show correct direction
 - [x] No crashes with 0 drawers or 0 cabinets
 
-**A2 Checklist:**
-- [ ] Edit button appears on cabinet cards
-- [ ] Form pre-fills with cabinet data
-- [ ] Updates save to database
-- [ ] Can still create new cabinets
+**A2 Checklist:** ✅ COMPLETE
+- [x] Edit button appears on cabinet cards
+- [x] Form pre-fills with cabinet data
+- [x] Updates save to database
+- [x] Can still create new cabinets
 
-**A3 Checklist:**
-- [ ] Drawer badges show on cabinet cards
-- [ ] Preset buttons work and highlight
-- [ ] Empty states look professional
-- [ ] Loading spinners appear during saves
+**A3 Checklist:** ✅ COMPLETE
+- [x] Drawer badges show on cabinet cards
+- [x] Preset buttons work and highlight
+- [x] Loading spinners appear during saves
 
 ---
 
@@ -137,11 +108,11 @@ After each session, verify:
 
 ---
 
-## Next Steps After Path A
+## Next Steps
 
-When A2 and A3 are complete, move to **Phase 5 (PDF Export & Final Polish)**:
+Path A is complete. Move to **Phase 5 (PDF Export & Final Polish)**:
 - PDF generation from the cut list and cutting diagrams
 - Hardware list / BOM export
 - Final app polish and store preparation
 
-Phase 4 (bin packing, SVG diagram, multi-sheet) is fully complete — see CLAUDE.md for the full implementation details.
+See WORK_PLAN.md for Phase 5 milestones and entry points.
