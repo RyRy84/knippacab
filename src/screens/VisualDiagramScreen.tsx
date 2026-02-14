@@ -14,8 +14,8 @@
  * ── SETTINGS ──────────────────────────────────────────────────────────────────
  *   Sheet width/height and saw kerf are shown in a collapsible panel.
  *   Editing any setting re-runs the optimizer immediately (no explicit button).
- *   Values are stored in component state and NOT persisted — they reset on
- *   navigation away (persist via SQLite settings is a V2 task).
+ *   Values initialise from the global settingsStore (persisted in SQLite).
+ *   Local overrides are kept in component state for the current session.
  *
  * ── MULTI-MATERIAL ────────────────────────────────────────────────────────────
  *   When a project has parts from >1 material (e.g. 3/4" and 1/4" plywood)
@@ -35,6 +35,7 @@ import {
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types';
 import { useProjectStore } from '../store/projectStore';
+import { useSettingsStore } from '../store/settingsStore';
 import { calculateCabinetParts } from '../utils/cabinetCalculator';
 import { calculateDrawerParts } from '../utils/drawerCalculator';
 import { optimizeSheetCutting } from '../utils/optimizer/binPacking';
@@ -48,6 +49,7 @@ import { formatForDisplay } from '../utils/unitConversion';
 import CuttingDiagram from '../components/CuttingDiagram';
 import MeasurementInput from '../components/MeasurementInput';
 import { exportToPdf } from '../utils/pdfGenerator';
+import { generateHardwareRecommendations } from '../utils/hardwareRecommendations';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'VisualDiagram'>;
@@ -86,10 +88,15 @@ export default function VisualDiagramScreen({ navigation }: Props) {
 
   const units: MeasurementUnit = currentProject?.units ?? 'imperial';
 
-  // ── Optimizer settings state ──────────────────────────────────────────
-  const [sheetWidth,  setSheetWidth]  = useState<number | null>(DEFAULT_SHEET_SETTINGS.sheetWidth);
-  const [sheetHeight, setSheetHeight] = useState<number | null>(DEFAULT_SHEET_SETTINGS.sheetHeight);
-  const [sawKerf,     setSawKerf]     = useState<number | null>(DEFAULT_SHEET_SETTINGS.sawKerf);
+  // ── Persisted defaults from settingsStore ───────────────────────────
+  const storedSheetWidth  = useSettingsStore(s => s.defaultSheetWidth);
+  const storedSheetHeight = useSettingsStore(s => s.defaultSheetHeight);
+  const storedSawKerf     = useSettingsStore(s => s.defaultSawKerf);
+
+  // ── Optimizer settings state (initialise from store) ───────────────
+  const [sheetWidth,  setSheetWidth]  = useState<number | null>(storedSheetWidth);
+  const [sheetHeight, setSheetHeight] = useState<number | null>(storedSheetHeight);
+  const [sawKerf,     setSawKerf]     = useState<number | null>(storedSawKerf);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // ── SVG container width — set via onLayout ────────────────────────────
@@ -202,6 +209,7 @@ export default function VisualDiagramScreen({ navigation }: Props) {
         allParts,
         optimizationResults,
         settings,
+        hardware: generateHardwareRecommendations(cabinets, drawers),
       });
     } catch (err) {
       // User cancelled the print dialog — not a real error worth reporting.

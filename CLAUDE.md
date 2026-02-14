@@ -110,12 +110,12 @@ Door height = Cabinet height - 3mm (top) - 0mm (bottom, base cabs)
 6. Cut list generator (grain direction, joinery adjustments, grouped by material)
 7. Sheet goods optimizer with visual 2D cutting diagram
 
-### Nice-to-Have V1
-- 2D cabinet wireframe preview
-- Material cost estimation
-- Hardware recommendations based on joinery
-- Save/load projects (local SQLite)
-- Assembly instructions adapted to joinery method
+### Nice-to-Have V1 (status)
+- 2D cabinet wireframe preview — *deferred to V2*
+- Material cost estimation — *deferred to V2*
+- Hardware recommendations based on joinery — **DONE (Phase 5.3)**
+- Save/load projects (local SQLite) — **DONE (Phase 2)**
+- Assembly instructions adapted to joinery method — *deferred to V2*
 
 ### Explicitly V2
 - 3D visualization
@@ -151,6 +151,8 @@ See `Projects/knippacab-notes.md` in RyRy84/project-management repo for full sch
 ## Screen Flow
 
 Home → Project Setup (name, units, default joinery) → Cabinet Builder (type, dimensions, toe kick, joinery) → Drawer Builder (within cabinet) → Review/Edit → Generate Cutting Plan → Visual Diagram → Export
+
+Home → Settings (units, default joinery, toe kick, sheet size, saw kerf)
 
 ## Development Notes
 
@@ -264,9 +266,9 @@ All use synchronous expo-sqlite API. Cascading deletes via foreign keys (project
 
 ### `src/store/settingsStore.ts` — User Preferences (Zustand)
 
-State: `units`, `defaultJoinery`, `defaultSawKerf`, `defaultToeKick`.
-Actions: `loadSettings()` (call at startup), `setUnits()`, `setDefaultJoinery()`, `setDefaultSawKerf()`, `setDefaultToeKick()`.
-All setters persist to SQLite immediately.
+State: `units`, `defaultJoinery`, `defaultSawKerf`, `defaultToeKick`, `defaultSheetWidth`, `defaultSheetHeight`.
+Actions: `loadSettings()` (call at startup), `setUnits()`, `setDefaultJoinery()`, `setDefaultSawKerf()`, `setDefaultToeKick()`, `setDefaultSheetWidth()`, `setDefaultSheetHeight()`.
+All setters persist to SQLite immediately. Sheet dimensions default to `DEFAULT_SHEET_SETTINGS` (2440×1220mm / 4'×8').
 
 ### `src/store/projectStore.ts` — Project/Cabinet/Drawer State (Zustand)
 
@@ -561,7 +563,7 @@ Three new functions added for the MeasurementInput component:
 
 ---
 
-### `src/__tests__/` — Unit Test Suites (156 tests, all passing — Phase 5.1 has no new tests; `generatePdfHtml` is testable without a device)
+### `src/__tests__/` — Unit Test Suites (172 tests, all passing)
 
 | File | Describes | Tests |
 |------|-----------|-------|
@@ -571,6 +573,7 @@ Three new functions added for the MeasurementInput component:
 | `grainLogic.test.ts` | assignGrainDirection (all part types incl. doors/faces), canRotatePart, end-to-end | 19 |
 | `unitConversion.test.ts` | parseImperialInput (all formats), parseMetricInput, parseMeasurementInput, core conversions | 46 |
 | `optimizer.test.ts` | Empty input, bounds, no overlaps, grain constraints, multi-sheet, utilization, oversized, kerf | 17 |
+| `hardwareRecommendations.test.ts` | All joinery fasteners, hinges (short/tall/no-door), slides (length matching), multi-cabinet accumulation, category sorting | 16 |
 
 Run with: `npm test`
 
@@ -715,6 +718,56 @@ const [width, setWidth] = useState(0);
 **SVG generation (`sheetToSvg`):** Pure function — no React deps. Scales sheet to 540px wide, draws cabinet-coloured rectangles, 3-tier label density (fill only / name / name+dims).
 
 **Integration:**
-- `CuttingPlanScreen` — runs optimizer with `DEFAULT_SHEET_SETTINGS`, then calls `exportToPdf()`
-- `VisualDiagramScreen` — passes existing `optimizationResults` + user-customised `settings` to `exportToPdf()`
+- `CuttingPlanScreen` — runs optimizer with `DEFAULT_SHEET_SETTINGS`, then calls `exportToPdf()`; also shows hardware shopping list
+- `VisualDiagramScreen` — passes existing `optimizationResults` + user-customised `settings` + hardware to `exportToPdf()`
 - Both screens show `ActivityIndicator` while generating; silent cancel handling on user dismiss
+
+---
+
+### Phase 5.2 — Settings Screen (COMPLETE)
+
+#### `src/screens/SettingsScreen.tsx` — Global User Preferences
+
+**Purpose:** Dedicated settings screen accessible from the Home screen. Allows the user to configure app-wide defaults that persist via SQLite.
+
+**Settings available:**
+- **Display units** — Imperial / Metric segmented control
+- **Default joinery method** — 4 radio cards (pocket_hole, butt_screws, dado_rabbet, dowel)
+- **Default toe kick** — 3 radio cards (standard, custom, none) with custom height input
+- **Default sheet width** — MeasurementInput (defaults to 2440mm / 96")
+- **Default sheet height** — MeasurementInput (defaults to 1220mm / 48")
+- **Default saw kerf** — MeasurementInput (defaults to 3.175mm / 1/8")
+
+**State:** All values read from and written to `settingsStore` (Zustand + SQLite persistence). Uses single-value selectors.
+
+**Navigation:** `Home → Settings` (registered in AppNavigator).
+
+---
+
+### Phase 5.3 — Hardware Recommendations (COMPLETE)
+
+#### `src/utils/hardwareRecommendations.ts` — Hardware Shopping List Generator
+
+**Purpose:** Pure function that generates a categorised hardware shopping list based on cabinet configurations and drawer setups.
+
+**Public API:**
+
+| Export | Type | Description |
+|--------|------|-------------|
+| `generateHardwareRecommendations(cabinets, drawers)` | `HardwareRecommendation` | Main function |
+| `HardwareItem` | interface | `{ name, quantity, unit, category, note? }` |
+| `HardwareRecommendation` | interface | `{ items[], totalItemTypes }` |
+| `CATEGORY_LABELS` | `Record<string, string>` | `fasteners → "Fasteners"` etc. |
+
+**Categories:** `fasteners`, `hinges`, `slides`, `accessories`
+
+**Logic highlights:**
+- **Fasteners:** per joinery method — pocket_hole → 1-1/4" pocket screws, butt_screws → #8 wood screws, dado_rabbet → 18ga brad nails, dowel → 5/16" fluted dowels
+- **Hinges:** 35mm Euro cup hinges — 2 per door (short), 3 per door (≥900mm tall); double doors for cabinets >600mm wide; no hinges for `tall` type (pantry/utility)
+- **Slides:** full-extension ball-bearing, length matched to cabinet depth (12"–22" range)
+- **Accessories:** brad nails for back panels, wood glue (always)
+
+**Integration:**
+- `CuttingPlanScreen` — hardware shopping list section grouped by category below material sections
+- `pdfGenerator.ts` — hardware table added as a new section in PDF output (with page break)
+- `VisualDiagramScreen` — passes hardware to PDF export via `generateHardwareRecommendations()`

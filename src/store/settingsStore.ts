@@ -40,6 +40,7 @@ import { getSetting, setSetting } from '../db/queries';
 import {
   DEFAULT_SAW_KERF_MM,
 } from '../constants/cabinetDefaults';
+import { DEFAULT_SHEET_SETTINGS } from '../utils/optimizer/types';
 
 // =============================================================================
 // STATE TYPE
@@ -59,6 +60,12 @@ interface SettingsState {
   /** Default toe kick option for new base cabinets. */
   defaultToeKick: ToeKickOption;
 
+  /** Default sheet width in mm for the optimizer. */
+  defaultSheetWidth: number;
+
+  /** Default sheet height in mm for the optimizer. */
+  defaultSheetHeight: number;
+
   // ─── Actions ────────────────────────────────────────────────────────────
   /** Load all settings from the database into this store. Call once at startup. */
   loadSettings: () => void;
@@ -74,6 +81,12 @@ interface SettingsState {
 
   /** Update the default toe kick option and persist to DB. */
   setDefaultToeKick: (option: ToeKickOption) => void;
+
+  /** Update the default sheet width and persist to DB. */
+  setDefaultSheetWidth: (widthMm: number) => void;
+
+  /** Update the default sheet height and persist to DB. */
+  setDefaultSheetHeight: (heightMm: number) => void;
 }
 
 // =============================================================================
@@ -86,6 +99,8 @@ export const useSettingsStore = create<SettingsState>()((set) => ({
   defaultJoinery: 'pocket_hole',
   defaultSawKerf: DEFAULT_SAW_KERF_MM,
   defaultToeKick: 'standard',
+  defaultSheetWidth: DEFAULT_SHEET_SETTINGS.sheetWidth,
+  defaultSheetHeight: DEFAULT_SHEET_SETTINGS.sheetHeight,
 
   // ─── Actions ────────────────────────────────────────────────────────────
 
@@ -95,8 +110,10 @@ export const useSettingsStore = create<SettingsState>()((set) => ({
     const defaultJoinery = getSetting('defaultJoinery', 'pocket_hole') as JoineryMethod;
     const defaultSawKerf = parseFloat(getSetting('defaultSawKerf', String(DEFAULT_SAW_KERF_MM)));
     const defaultToeKick = getSetting('defaultToeKick', 'standard') as ToeKickOption;
+    const defaultSheetWidth = parseFloat(getSetting('defaultSheetWidth', String(DEFAULT_SHEET_SETTINGS.sheetWidth)));
+    const defaultSheetHeight = parseFloat(getSetting('defaultSheetHeight', String(DEFAULT_SHEET_SETTINGS.sheetHeight)));
 
-    set({ units, defaultJoinery, defaultSawKerf, defaultToeKick });
+    set({ units, defaultJoinery, defaultSawKerf, defaultToeKick, defaultSheetWidth, defaultSheetHeight });
   },
 
   setUnits: (units) => {
@@ -117,5 +134,15 @@ export const useSettingsStore = create<SettingsState>()((set) => ({
   setDefaultToeKick: (defaultToeKick) => {
     setSetting('defaultToeKick', defaultToeKick);
     set({ defaultToeKick });
+  },
+
+  setDefaultSheetWidth: (defaultSheetWidth) => {
+    setSetting('defaultSheetWidth', String(defaultSheetWidth));
+    set({ defaultSheetWidth });
+  },
+
+  setDefaultSheetHeight: (defaultSheetHeight) => {
+    setSetting('defaultSheetHeight', String(defaultSheetHeight));
+    set({ defaultSheetHeight });
   },
 }));

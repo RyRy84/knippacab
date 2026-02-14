@@ -1,24 +1,24 @@
 # KnippaCab Work Plan
 
-**Last Updated:** February 11, 2026
+**Last Updated:** February 13, 2026
 **For:** Claude Code implementation sessions
 
 ---
 
-## Current State: Phases 1–4 + Path A + Phase 5.1 COMPLETE ✅
+## Current State: All Phases COMPLETE ✅ — V1 MVP Feature-Complete
 
-Phases 1–4 are fully implemented. The full end-to-end workflow is operational:
+All 5 development phases are fully implemented. The full end-to-end workflow is operational:
 
 ```
 Create project → Add cabinets → Add drawers → Review list
-  → Cut list (grouped by material) → Visual cutting diagram (SVG)
+  → Cut list (+ hardware shopping list) → Visual cutting diagram (SVG) → Export PDF
 ```
 
-**19 commits · ~9,500+ lines of code · 156 passing unit tests · Runs on web (`npx expo start --web`)**
+**20+ commits · ~12,000+ lines of code · 172 passing unit tests · Runs on web (`npx expo start --web`)**
 
 ---
 
-## What's Built (Phases 1–4)
+## What's Built
 
 ### Phase 1: Foundation ✅
 - Unit conversion + fractional Imperial display
@@ -28,7 +28,6 @@ Create project → Add cabinets → Add drawers → Review list
 - SQLite schema + migrations + CRUD queries
 - Web platform stubs (bypasses SQLite WASM requirement)
 - Zustand stores (projectStore, settingsStore, uiStore)
-- 93 unit tests
 
 ### Phase 2: Data Persistence ✅
 - SQLite fully wired to all store actions
@@ -36,37 +35,38 @@ Create project → Add cabinets → Add drawers → Review list
 - Web uses in-memory Zustand only (acceptable for dev/demo)
 
 ### Phase 3: Core UI Screens ✅
-- **HomeScreen** — project list, create/open/delete
+- **HomeScreen** — project list, create/open/delete, Settings button
 - **ProjectSetupScreen** — name, units, default joinery
 - **CabinetBuilderScreen** — type selector, MeasurementInput width + preset buttons, toe kick, joinery; edit mode; loading state
-- **ReviewEditScreen** — cabinet cards with Edit/Delete/Add-Drawers, drawer count badge, "Generate Cut List"
+- **ReviewEditScreen** — cabinet cards with Edit/Delete/Add-Drawers, drawer count badge, disabled "Generate Cut List" when empty
 - **DrawerBuilderScreen** — drawer count, per-drawer heights (MeasurementInput), auto-balance, corner joinery + bottom method; loading state
-- **CuttingPlanScreen** — all parts (cabinets + drawers) grouped by material, grain badges, summary header
+- **CuttingPlanScreen** — all parts grouped by material, grain badges, hardware shopping list, summary header
 - **MeasurementInput component** — fractional Imperial (`"36 1/2"`, `"3' 6"`) + Metric with parse/reformat
 
 ### Phase 4: Sheet Goods Optimizer ✅
-- **`src/utils/optimizer/types.ts`** — `OptimizationSettings`, `ExpandedPart`, `PlacedPart`, `SheetLayout`, `OptimizationResult`
-- **`src/utils/optimizer/binPacking.ts`** — Guillotine BSSF (Best-Short-Side-Fit) algorithm with grain constraints, multi-sheet, kerf accounting
+- **`src/utils/optimizer/binPacking.ts`** — Guillotine BSSF with grain constraints, multi-sheet, kerf accounting
 - **`src/components/CuttingDiagram.tsx`** — SVG diagram: cabinet colour-coded parts, grain symbols, rotation indicators, 3-tier label density
-- **`src/screens/VisualDiagramScreen.tsx`** — settings panel (sheet size, kerf), material tabs, per-sheet SVG cards, utilization stats, oversized-parts warning
-- 17 optimizer unit tests (bounds, no overlaps, grain constraints, multi-sheet, oversized, kerf)
+- **`src/screens/VisualDiagramScreen.tsx`** — settings panel (sheet size, kerf from persisted defaults), material tabs, per-sheet SVG cards, utilization stats
+- 17 optimizer unit tests
 
-### Phase 5.1: PDF Export ✅
-- **`src/utils/optimizer/types.ts`** — `OptimizationSettings`, `ExpandedPart`, `PlacedPart`, `SheetLayout`, `OptimizationResult`
-- **`src/utils/optimizer/binPacking.ts`** — Guillotine BSSF (Best-Short-Side-Fit) algorithm with grain constraints, multi-sheet, kerf accounting
-- **`src/components/CuttingDiagram.tsx`** — SVG diagram: cabinet colour-coded parts, grain symbols, rotation indicators, 3-tier label density
-- **`src/screens/VisualDiagramScreen.tsx`** — settings panel (sheet size, kerf), material tabs, per-sheet SVG cards, utilization stats, oversized-parts warning
-- 17 optimizer unit tests (bounds, no overlaps, grain constraints, multi-sheet, oversized, kerf)
+### Phase 5: Polish & MVP Completion ✅
 
+#### 5.1 PDF Export ✅
 - **`expo-print`** installed (SDK 54 compatible)
-- **`src/utils/pdfGenerator.ts`** — HTML/SVG PDF generation: cover page, cut list table, inline SVG cutting diagrams, `exportToPdf()` via expo-print
-- **Export PDF button** wired in `CuttingPlanScreen` and `VisualDiagramScreen` (loading state, error handling)
+- **`src/utils/pdfGenerator.ts`** — Cover page, cut list table, cutting diagrams, hardware table
+- **Export PDF** wired in `CuttingPlanScreen` and `VisualDiagramScreen`
 
-**Total tests:** 156 passing
+#### 5.2 Settings Persistence ✅
+- **`src/screens/SettingsScreen.tsx`** — Full settings screen (units, joinery, toe kick, sheet size, kerf)
+- **settingsStore** expanded: `defaultSheetWidth`, `defaultSheetHeight` persisted to SQLite
+- **VisualDiagramScreen** initialises from persisted settings
+- **Navigation** updated: Settings route + button on HomeScreen
 
----
-
-## What's Next
+#### 5.3 Hardware Recommendations ✅
+- **`src/utils/hardwareRecommendations.ts`** — Pure function: screws, hinges, slides, accessories
+- **CuttingPlanScreen** — hardware shopping list UI section
+- **PDF export** — hardware table with category headers
+- 16 unit tests
 
 ### Path A: UX Polish ✅ COMPLETE
 
@@ -76,20 +76,15 @@ Create project → Add cabinets → Add drawers → Review list
 | A2 | Edit cabinet functionality | `04ced75` |
 | A3 | Drawer badges, preset buttons, loading states | `c308b97` |
 
-**Path A is fully complete. See PATH_A_MASTER_GUIDE.md for details.**
+**Total tests:** 172 passing (7 test suites)
 
 ---
 
-### Phase 5: PDF Export & Final Polish
+## What's Next (V1 Release Prep)
 
-**Phase 5.1 COMPLETE.** Full PDF export (cover + cut list + cutting diagrams) works from both screens.
-
-**Remaining Phase 5 milestones:**
-1. **5.2 — Settings Persistence** — wire VisualDiagramScreen sheet settings to SQLite; build a dedicated Settings screen
-2. **5.3 — Hardware Recommendations** — suggest screws/hinges/slides based on joinery; include in PDF
-3. **5.4 — Final Polish** — app icon, splash screen, store assets, comprehensive error handling
-
-**Entry point:** Start with `ROADMAP.md` Phase 5.2/5.3 milestones.
+1. **Home Screen Project Management** — load/display saved projects (native), rename, delete
+2. **Production readiness** — app icon, splash screen, store assets, iOS/Android builds
+3. **V2 planning** — review FEATURE_BACKLOG.md
 
 ---
 
@@ -98,7 +93,7 @@ Create project → Add cabinets → Add drawers → Review list
 ```bash
 npx expo start          # Start dev server (press w for web)
 npx expo start --web    # Start directly in web mode
-npm test                # Run 156 unit tests
+npm test                # Run 172 unit tests
 npx tsc --noEmit        # TypeScript type check
 ```
 
@@ -113,15 +108,14 @@ npx tsc --noEmit        # TypeScript type check
 
 ---
 
-## Key Files for Phase 5 (PDF Export)
+## Key Files
 
 ```
-src/screens/CuttingPlanScreen.tsx      # "Export PDF" button → wire to PDF generator
-src/screens/VisualDiagramScreen.tsx    # "Export PDF" button → embed SVG diagrams
-src/utils/pdfExport.ts                 # NEW — PDF generation module (create this)
+src/screens/SettingsScreen.tsx            # App-wide settings
+src/screens/CuttingPlanScreen.tsx         # Cut list + hardware shopping list
+src/screens/VisualDiagramScreen.tsx       # SVG cutting diagrams
+src/utils/pdfGenerator.ts                 # PDF export (cover + cut list + diagrams + hardware)
+src/utils/hardwareRecommendations.ts      # Hardware shopping list generator
+src/utils/optimizer/binPacking.ts         # Guillotine BSSF algorithm
+src/store/settingsStore.ts                # Persisted user preferences
 ```
-
-**Recommended library:** `jsPDF` — web-compatible, no native build required.
-Install with: `npx expo install jspdf`
-
-**Phase 5 entry point:** The "Export PDF" buttons in CuttingPlanScreen and VisualDiagramScreen currently show `Alert.alert` placeholders. Wire those to the new `pdfExport.ts` module.

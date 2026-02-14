@@ -27,6 +27,13 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       </View>
       <View style={styles.buttonRow}>
         <Button
+          title="Settings"
+          onPress={() => navigation.navigate('Settings')}
+          color="#757575"
+        />
+      </View>
+      <View style={styles.buttonRow}>
+        <Button
           title="Calculator Demo"
           onPress={() => navigation.navigate('CalculatorDemo')}
           color="#4CAF50"

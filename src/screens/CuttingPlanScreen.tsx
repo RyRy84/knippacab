@@ -35,6 +35,11 @@ import { formatForDisplay } from '../utils/unitConversion';
 import { optimizeSheetCutting } from '../utils/optimizer/binPacking';
 import { DEFAULT_SHEET_SETTINGS } from '../utils/optimizer/types';
 import { exportToPdf } from '../utils/pdfGenerator';
+import {
+  generateHardwareRecommendations,
+  HardwareItem,
+  CATEGORY_LABELS,
+} from '../utils/hardwareRecommendations';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'CuttingPlan'>;
@@ -214,6 +219,12 @@ export default function CuttingPlanScreen({ navigation }: Props) {
     [allParts]
   );
 
+  // ── Hardware recommendations ──────────────────────────────────────────
+  const hardware = useMemo(
+    () => generateHardwareRecommendations(cabinets, drawers),
+    [cabinets, drawers]
+  );
+
   // ── Handlers ───────────────────────────────────────────────────────────
 
   /**
@@ -245,6 +256,7 @@ export default function CuttingPlanScreen({ navigation }: Props) {
         allParts,
         optimizationResults,
         settings: DEFAULT_SHEET_SETTINGS,
+        hardware,
       });
     } catch (err) {
       // User cancelled the print dialog — not a real error worth reporting.
@@ -294,15 +306,54 @@ export default function CuttingPlanScreen({ navigation }: Props) {
 
         ) : (
 
-          /* One MaterialSection per unique material */
-          Array.from(partsByMaterial.entries()).map(([material, parts]) => (
-            <MaterialSection
-              key={material}
-              material={material}
-              parts={parts}
-              units={units}
-            />
-          ))
+          <>
+            {/* One MaterialSection per unique material */}
+            {Array.from(partsByMaterial.entries()).map(([material, parts]) => (
+              <MaterialSection
+                key={material}
+                material={material}
+                parts={parts}
+                units={units}
+              />
+            ))}
+
+            {/* Hardware Recommendations */}
+            {hardware.items.length > 0 && (
+              <View style={styles.hardwareSection}>
+                <View style={styles.hardwareHeader}>
+                  <Text style={styles.hardwareTitle}>Hardware Shopping List</Text>
+                  <View style={styles.hardwareBadge}>
+                    <Text style={styles.hardwareBadgeText}>
+                      {hardware.totalItemTypes} {hardware.totalItemTypes === 1 ? 'item' : 'items'}
+                    </Text>
+                  </View>
+                </View>
+
+                {(['fasteners', 'hinges', 'slides', 'accessories'] as const).map(cat => {
+                  const catItems = hardware.items.filter(i => i.category === cat);
+                  if (catItems.length === 0) return null;
+                  return (
+                    <View key={cat} style={styles.hardwareCatGroup}>
+                      <Text style={styles.hardwareCatLabel}>{CATEGORY_LABELS[cat]}</Text>
+                      {catItems.map((item, idx) => (
+                        <View key={`${cat}-${idx}`} style={styles.hardwareRow}>
+                          <View style={styles.hardwareRowLeft}>
+                            <Text style={styles.hardwareItemName}>{item.name}</Text>
+                            {item.note ? (
+                              <Text style={styles.hardwareItemNote}>{item.note}</Text>
+                            ) : null}
+                          </View>
+                          <Text style={styles.hardwareItemQty}>
+                            {item.quantity} {item.unit}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </>
 
         )}
       </ScrollView>
@@ -499,6 +550,86 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#9E9E9E',
+  },
+
+  // ── Hardware section ────────────────────────────────────────────────────
+  hardwareSection: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  hardwareHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginBottom: 6,
+  },
+  hardwareTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#E65100',
+    letterSpacing: 0.2,
+  },
+  hardwareBadge: {
+    backgroundColor: '#E65100',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  hardwareBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  hardwareCatGroup: {
+    marginBottom: 8,
+  },
+  hardwareCatLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#757575',
+    marginBottom: 4,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  hardwareRow: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.07,
+    shadowRadius: 2,
+  },
+  hardwareRowLeft: {
+    flex: 1,
+    marginRight: 10,
+  },
+  hardwareItemName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#212121',
+  },
+  hardwareItemNote: {
+    fontSize: 11,
+    color: '#9E9E9E',
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  hardwareItemQty: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#E65100',
+    fontVariant: ['tabular-nums'],
   },
 
   // ── Footer ──────────────────────────────────────────────────────────────

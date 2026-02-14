@@ -7,6 +7,7 @@
 
 export type RootStackParamList = {
   Home: undefined;
+  Settings: undefined;
   ProjectSetup: undefined;
   CabinetBuilder: { cabinetId?: string } | undefined;
   DrawerBuilder: { cabinetId: string };
